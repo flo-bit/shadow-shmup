@@ -1,0 +1,29 @@
+{
+  "name": "shadow-shooter",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@dimforge/rapier2d": "^0.11.2",
+    "@dimforge/rapier2d-compat": "^0.14.0",
+    "@pixi/filter-glow": "^5.2.1",
+    "pixi.js": "^8.2.5",
+    "prettier": "^3.3.3",
+    "vite": "4.5.0",
+    "vite-plugin-wasm": "3.2.2"
+  },
+  "keywords": [],
+  "description": "Vite with rapier and pixi for quick testing.",
+  "devDependencies": {
+    "@types/node": "^20.14.11",
+    "@types/pixi.js": "^5.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3",
+    "vite-plugin-typescript": "^1.0.4"
+  }
+}
