@@ -1,7 +1,37 @@
 import * as PIXI from 'pixi.js';
+import Game from './app';
+import { RAPIER } from './rapier';
+import { type RigidBody } from '@dimforge/rapier2d';
 
 export default class Enemy {
-	constructor() {
+	game: Game;
+
+	size: number;
+
+	enemyContainer: PIXI.Container;
+
+	health: number;
+	maxHealth: number;
+
+	healthBar?: PIXI.Graphics;
+
+	damage: number;
+
+	speed: number;
+
+	shape: PIXI.Graphics;
+
+	exploding: boolean;
+	destroyTime: number;
+
+	destroyed: boolean;
+
+	isEnemy: true;
+
+	rigidBody?: RigidBody;
+
+	constructor(game: Game) {
+		this.game = game;
 		// add a square
 
 		this.size = 30;
@@ -12,9 +42,9 @@ export default class Enemy {
 
 		game.container.addChild(this.enemyContainer);
 
-		const shape = new PIXI.Graphics().rect(0, 0, this.size, this.size).fill(0);
-		shape.pivot.set(this.size / 2, this.size / 2);
-		this.enemyContainer.addChild(shape);
+		this.shape = new PIXI.Graphics().circle(0, 0, this.size / 2).fill(0x070707);
+		//this.shape.pivot.set(this.size / 2, this.size / 2);
+		this.enemyContainer.addChild(this.shape);
 
 		this.maxHealth = 100;
 		this.health = this.maxHealth;
@@ -26,7 +56,6 @@ export default class Enemy {
 		this.damage = 10; // Damage dealt to player on contact
 
 		this.speed = 0.05;
-		this.shape = shape;
 
 		this.exploding = false;
 		this.destroyTime = -1;
@@ -48,46 +77,61 @@ export default class Enemy {
 	}
 
 	createRidigBody() {
-		const rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic()
+		const rigidBodyDesc = RAPIER()
+			.RigidBodyDesc.dynamic()
 			.setTranslation(this.x, this.y)
-			.lockRotations();
-		this.rigidBody = world.createRigidBody(rigidBodyDesc);
+			.lockRotations()
+			.setLinearDamping(0.5);
+		this.rigidBody = this.game.world.createRigidBody(rigidBodyDesc);
 
-		const colliderDesc = RAPIER.ColliderDesc.cuboid(this.size / 2, this.size / 2)
-			.setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS)
-			.setCollisionGroups(0x00020006);
-		this.collider = world.createCollider(colliderDesc, this.rigidBody);
+		const colliderDesc = RAPIER()
+			.ColliderDesc.ball(this.size / 2)
+			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
+			.setCollisionGroups(0x00020007);
+
+		this.game.world.createCollider(colliderDesc, this.rigidBody);
 
 		this.rigidBody.userData = this;
 	}
 
 	get x() {
+		if (this.rigidBody) return this.rigidBody.translation().x;
+
 		return this.enemyContainer.x;
 	}
 	set x(value) {
 		this.enemyContainer.x = value;
-		this.rigidBody.setTranslation({ x: value, y: -this.y });
+		this.rigidBody?.setTranslation({ x: value, y: -this.y }, true);
 	}
 
 	get y() {
+		if (this.rigidBody) return -this.rigidBody.translation().y;
+
 		return this.enemyContainer.y;
 	}
 	set y(value) {
 		this.enemyContainer.y = value;
 
-		this.rigidBody.setTranslation({ x: this.x, y: -value });
+		this.rigidBody?.setTranslation({ x: this.x, y: -value }, true);
 	}
 
 	get position() {
+		if (this.rigidBody) {
+			let v = this.rigidBody.translation();
+			return { x: v.x, y: -v.y };
+		}
+
 		return this.enemyContainer.position;
 	}
 	set position(value) {
 		this.enemyContainer.position = value;
-		this.rigidBody.setTranslation({ x: this.x, y: -this.y });
+		this.rigidBody?.setTranslation({ x: this.x, y: -this.y }, true);
 	}
 
-	update(deltaTime, player) {
-		if (this.destroyed) return;
+	update(deltaTime: number) {
+		let player = this.game.player;
+
+		if (this.destroyed || !player) return;
 
 		// move the player, wasd
 		let dx = player.x - this.x;
@@ -97,10 +141,18 @@ export default class Enemy {
 
 		// Only move if not too close to the player and not exploding
 		if (distance > this.size + 10 && !this.exploding) {
-			this.x += (dx / distance) * this.speed * deltaTime;
-			this.y += (dy / distance) * this.speed * deltaTime;
+			// this.x += (dx / distance) * this.speed * deltaTime;
+			// this.y += (dy / distance) * this.speed * deltaTime;
+
+			// lets add some force instead of moving it directly, the further away the player, the more force
+			const force = 500;
+
+			const x = dx / distance;
+			const y = dy / distance;
+
+			this.rigidBody?.applyImpulse({ x: x * force, y: -y * force }, true);
 		} else if (!this.exploding) {
-			this.exploding = true;
+			//this.exploding = true;
 			this.destroyTime = 2000;
 		} else {
 			this.destroyTime -= deltaTime;
@@ -112,18 +164,22 @@ export default class Enemy {
 				}
 			}
 		}
+
+		this.enemyContainer.position.set(this.x, this.y);
 	}
 
 	destroy() {
 		this.destroyed = true;
 		// remove the square
 		this.shape.destroy();
-		world.removeRigidBody(this.rigidBody);
+		if (this.rigidBody) this.game.world.removeRigidBody(this.rigidBody);
 	}
 
-	takeDamage(amount) {
+	takeDamage(amount: number) {
 		this.health -= amount;
-		this.healthBar.width = (this.health / this.maxHealth) * this.size;
+
+		if (this.healthBar) this.healthBar.width = (this.health / this.maxHealth) * this.size;
+
 		if (this.health <= 0) {
 			this.destroy();
 		}

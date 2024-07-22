@@ -1,7 +1,10 @@
-import { Weapon } from './weapon';
+import { Weapon } from './weapon.js';
 import * as PIXI from 'pixi.js';
 
-import Game from './game.js';
+import Game from './app';
+import { RAPIER } from './rapier';
+import { type RigidBody } from '@dimforge/rapier2d';
+import EnemyManager from './enemy-manager.js';
 
 /**
  * Player class
@@ -10,37 +13,52 @@ import Game from './game.js';
  * @class Player
  */
 export default class Player {
+	game: Game;
+
+	size: number;
+
+	maxHealth: number;
+	health: number;
+
+	playerContainer: PIXI.Container;
+
+	shadow: PIXI.Graphics;
+
+	healthBar?: PIXI.Graphics;
+
+	speed: number;
+
+	shape: PIXI.Graphics;
+
+	weapon: Weapon;
+
+	isPlayer: true;
+
+	rigidBody?: RigidBody;
+
+	color: number;
+
 	constructor(game: Game) {
+		this.game = game;
+
 		this.size = 20;
 
 		this.maxHealth = 100;
 		this.health = this.maxHealth;
 
+		this.color = 0xe11d48;
+
 		this.playerContainer = new PIXI.Container();
 		game.container.addChild(this.playerContainer);
 
-		const light = new PIXI.Graphics();
-
-		// make a light source by drawing a circle with some opacity and getting smaller and smaller
-		for (let i = 0; i < 100; i++) {
-			const alpha = 0.02;
-			const radius = i * 4;
-			light.circle(0, 0, radius).fill({ color: 0xffffff, alpha });
-		}
-
-		light.x = 0;
-		light.y = 0;
-		this.playerContainer.addChild(light);
-
 		this.shadow = new PIXI.Graphics();
 		this.playerContainer.addChild(this.shadow);
-		light.mask = this.shadow;
 
-		const shape = new PIXI.Graphics().rect(0, 0, this.size, this.size).fill(0x00ff00);
+		this.createLight();
+
+		const shape = new PIXI.Graphics().rect(0, 0, this.size, this.size).fill(this.color);
 		shape.pivot.set(this.size / 2, this.size / 2);
 		this.playerContainer.addChild(shape);
-
-		this.contactDamage = 10;
 
 		this.createRigidBody();
 
@@ -49,16 +67,41 @@ export default class Player {
 		this.speed = 0.4;
 		this.shape = shape;
 
-		this.weapon = new Weapon('Pistol');
+		this.weapon = new Weapon(this.game, this.color);
 
 		this.isPlayer = true;
+	}
+
+	async createLight() {
+		// const light = new PIXI.Graphics();
+
+		// // make a light source by drawing a circle with some opacity and getting smaller and smaller
+		// for (let i = 0; i < 100; i++) {
+		// 	const alpha = 0.1 * Math.pow(1 - i / 100, 4);
+		// 	const radius = i * 4;
+		// 	light.circle(0, 0, radius).fill({ color: 0xffffff, alpha });
+		// }
+
+		// this.playerContainer.addChild(light);
+
+		const texture = await PIXI.Assets.load('/light.png');
+		const light = PIXI.Sprite.from(texture);
+		light.anchor.set(0.5);
+		light.scale.set(0.5);
+		light.zIndex = -1;
+
+		this.playerContainer.addChild(light);
+
+		light.mask = this.shadow;
 	}
 
 	createHealthBar() {
 		const healthBarWidth = this.size;
 		const healthBarHeight = 5;
 
-		this.healthBar = new PIXI.Graphics().rect(0, 0, healthBarWidth, healthBarHeight).fill(0x00ff00);
+		this.healthBar = new PIXI.Graphics()
+			.rect(0, 0, healthBarWidth, healthBarHeight)
+			.fill(this.color);
 		this.healthBar.position.set(0, -this.size);
 		this.healthBar.pivot.set(healthBarWidth / 2, healthBarHeight / 2);
 
@@ -66,16 +109,16 @@ export default class Player {
 	}
 
 	createRigidBody() {
-		const rigidBodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
+		const rigidBodyDesc = RAPIER()
+			.RigidBodyDesc.kinematicPositionBased()
 			.setTranslation(0, 0)
 			.lockRotations();
-		this.rigidBody = world.createRigidBody(rigidBodyDesc);
+		this.rigidBody = this.game.world.createRigidBody(rigidBodyDesc);
 
-		const colliderDesc = RAPIER.ColliderDesc.cuboid(
-			this.size / 2,
-			this.size / 2
-		).setCollisionGroups(0x00010000);
-		this.collider = world.createCollider(colliderDesc, this.rigidBody);
+		const colliderDesc = RAPIER()
+			.ColliderDesc.cuboid(this.size / 2, this.size / 2)
+			.setCollisionGroups(0x00010003);
+		this.game.world.createCollider(colliderDesc, this.rigidBody);
 
 		// Attach this Player instance to the rigid body's user data
 		this.rigidBody.userData = this;
@@ -86,7 +129,7 @@ export default class Player {
 	}
 	set x(value) {
 		this.playerContainer.x = value;
-		this.rigidBody.setTranslation({ x: value, y: -this.y });
+		this.rigidBody?.setTranslation({ x: value, y: -this.y }, true);
 	}
 
 	get y() {
@@ -94,7 +137,7 @@ export default class Player {
 	}
 	set y(value) {
 		this.playerContainer.y = value;
-		this.rigidBody.setTranslation({ x: this.x, y: -value });
+		this.rigidBody?.setTranslation({ x: this.x, y: -value }, true);
 	}
 
 	get position() {
@@ -103,10 +146,10 @@ export default class Player {
 	set position(value) {
 		this.playerContainer.position = value;
 
-		this.rigidBody.setTranslation({ x: this.x, y: -this.y });
+		this.rigidBody?.setTranslation({ x: this.x, y: -this.y }, true);
 	}
 
-	update(deltaTime, keys, enemyManager) {
+	update(deltaTime: number, keys: Record<string, boolean>) {
 		// move the player, wasd
 		let dx = 0,
 			dy = 0;
@@ -125,7 +168,7 @@ export default class Player {
 		this.y += dy * this.speed * deltaTime;
 
 		// get closest enemy
-		const closestEnemy = enemyManager.getClosestEnemy(this.position);
+		const closestEnemy = this.game.enemyManager?.getClosestEnemy(this.position);
 
 		if (closestEnemy) {
 			this.weapon.fire(this.position, closestEnemy.position);
@@ -140,7 +183,7 @@ export default class Player {
 		// ray cast around the player to create a shadow
 		this.shadow.clear();
 
-		const rays = 360;
+		const rays = 3600;
 
 		const angleStep = (Math.PI * 2) / rays;
 		const rayLength = 1000;
@@ -150,12 +193,12 @@ export default class Player {
 		for (let i = 0; i < rays; i++) {
 			const angle = i * angleStep;
 
-			const ray = new RAPIER.Ray(
+			const ray = new (RAPIER().Ray)(
 				{ x: this.x, y: -this.y },
 				{ x: Math.cos(angle), y: Math.sin(angle) }
 			);
 
-			const hit = world.castRay(ray, rayLength, true, null, 0x00020002);
+			const hit = this.game.world.castRay(ray, rayLength, true, undefined, 0x00020002);
 
 			let hitPoint = hit
 				? ray.pointAt(hit.toi)
@@ -171,18 +214,18 @@ export default class Player {
 				this.shadow.lineTo(x, y);
 			}
 
-			if (i === rays - 1) {
+			if (i === rays - 1 && firstPoint) {
 				this.shadow.lineTo(firstPoint.x, firstPoint.y);
 			}
 		}
 		this.shadow.fill(0);
 	}
 
-	takeDamage(amount) {
+	takeDamage(amount: number) {
 		this.health -= amount;
 		if (this.health < 0) {
 			this.health = 0;
 		}
-		this.healthBar.width = this.size * (this.health / this.maxHealth);
+		if (this.healthBar) this.healthBar.width = this.size * (this.health / this.maxHealth);
 	}
 }

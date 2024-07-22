@@ -1,15 +1,26 @@
 import Player from './player.js';
 import EnemyManager from './enemy-manager.js';
 import * as PIXI from 'pixi.js';
-//import RAPIER from '@dimforge/rapier2d-compat';
+import { type World, EventQueue } from '@dimforge/rapier2d';
+import { RAPIER } from './rapier.js';
+import ParticleSystem from './particles.js';
+import { Projectile } from './projectile.js';
+import Enemy from './enemy.js';
+
+import { AdvancedBloomFilter, OldFilmFilter, PixelateFilter } from 'pixi-filters';
 
 export default class Game {
 	container: PIXI.Container;
-	world?: RAPIER.World;
+	world!: World;
 
 	keys: Record<string, boolean> = {};
 
 	debugGraphics?: PIXI.Graphics;
+
+	player?: Player;
+	enemyManager?: EnemyManager;
+
+	particleSystem?: ParticleSystem;
 
 	constructor() {
 		this.setup();
@@ -23,7 +34,6 @@ export default class Game {
 	async setupPhysicsWorld() {
 		const RAPIER = await import('@dimforge/rapier2d');
 
-		//await RAPIER.init();
 		let gravity = new RAPIER.Vector2(0.0, 0.0);
 		let world = new RAPIER.World(gravity);
 
@@ -33,6 +43,8 @@ export default class Game {
 	}
 
 	async setup() {
+		await this.setupPhysicsWorld();
+
 		const app = new PIXI.Application();
 		// set to full screen
 		await app.init({
@@ -42,6 +54,9 @@ export default class Game {
 			backgroundColor: 0
 		});
 
+		this.particleSystem = new ParticleSystem(app);
+		this.container.addChild(this.particleSystem.container);
+
 		// add the canvas to the HTML document
 		document.body.appendChild(app.canvas);
 
@@ -50,6 +65,8 @@ export default class Game {
 
 		this.container.position.set(window.innerWidth / 2, window.innerHeight / 2);
 
+		//this.container.filters = [new AdvancedBloomFilter(), new PixelateFilter(6)];
+
 		// add a resize event listener
 		window.addEventListener('resize', () => {
 			app.renderer.resize(window.innerWidth, window.innerHeight);
@@ -57,19 +74,17 @@ export default class Game {
 			this.container.position.set(window.innerWidth / 2, window.innerHeight / 2);
 		});
 
-		await this.setupPhysicsWorld();
-
 		app.ticker.add((ticker) => {
 			// get ellapsed time
 			const deltaTime = ticker.deltaMS;
 
 			if (this.world) {
-				const eventQueue = new RAPIER.EventQueue(true);
+				const eventQueue = new (RAPIER().EventQueue)(true);
 				this.world.timestep = deltaTime * 0.001;
 				this.world.step(eventQueue);
 				this.handleCollisionEvents(eventQueue);
 			}
-
+			this.particleSystem?.update(deltaTime);
 			this.update(deltaTime);
 		});
 
@@ -81,7 +96,7 @@ export default class Game {
 		window.addEventListener('keyup', this.handleKeyUp.bind(this));
 	}
 
-	handleCollisionEvents(eventQueue: RAPIER.EventQueue) {
+	handleCollisionEvents(eventQueue: EventQueue) {
 		eventQueue.drainCollisionEvents((handle1, handle2, started) => {
 			if (!started) return;
 			if (!this.world) return;
@@ -95,16 +110,40 @@ export default class Game {
 
 			if (!userData1 || !userData2) return;
 
-			// if one is an enemy, the other a projectile, destroy the projectile, take damage
-			if (userData1.isEnemy && userData2.isProjectile) {
-				userData1.takeDamage(userData2.damage);
-				userData2.destroy();
+			let enemy: Enemy | undefined;
+			let projectile: Projectile | undefined;
+
+			// new way to check with instanceof
+			if (userData1 instanceof Enemy && userData2 instanceof Projectile) {
+				enemy = userData1;
+				projectile = userData2;
+			} else if (userData2 instanceof Enemy && userData1 instanceof Projectile) {
+				enemy = userData2;
+				projectile = userData1;
 			}
-			if (userData2.isEnemy && userData1.isProjectile) {
-				userData2.takeDamage(userData1.damage);
-				userData1.destroy();
+
+			if (enemy && projectile) {
+				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10);
+
+				enemy.takeDamage(projectile.damage);
+				projectile.destroy();
 			}
 		});
+	}
+
+	spawnParticles(x: number, y: number, num: number) {
+		for (let i = 0; i < num; i++) {
+			this.particleSystem?.createParticle(
+				x,
+				y,
+				Math.random() * 5 + 5, // size
+				this.player?.color ?? 0xffffff, // color
+				Math.random() * 0.5 + 0.5, // alpha
+				(Math.random() - 0.5) * 0.3, // speedX
+				(Math.random() - 0.5) * 0.3, // speedY
+				300
+			);
+		}
 	}
 
 	/**
@@ -113,13 +152,15 @@ export default class Game {
 	 */
 	update(deltaTime: number) {
 		// update game state here
-		this.player.update(deltaTime, this.keys, this.enemyManager);
+		this.player?.update(deltaTime, this.keys);
 
-		this.enemyManager.update(deltaTime, this.player);
+		this.enemyManager?.update(deltaTime);
 
 		if (Math.random() < deltaTime * 0.002) {
-			this.enemyManager.addEnemy();
+			this.enemyManager?.addEnemy();
 		}
+
+		//this.renderPhysicsDebug();
 	}
 
 	handleKeyDown(e: KeyboardEvent) {

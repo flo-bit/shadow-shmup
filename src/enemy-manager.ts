@@ -1,8 +1,14 @@
+import Game from './app.js';
 import Enemy from './enemy.js';
+import Player from './player.js';
 
 export default class EnemyManager {
-	constructor(num) {
-		this.enemies = [];
+	game: Game;
+
+	enemies: Enemy[] = [];
+
+	constructor(game: Game, num: number) {
+		this.game = game;
 
 		for (let i = 0; i < num; i++) {
 			this.addEnemy();
@@ -10,27 +16,28 @@ export default class EnemyManager {
 	}
 
 	addEnemy() {
-		const enemy = new Enemy(this.container);
+		const enemy = new Enemy(this.game);
 		this.enemies.push(enemy);
 	}
 
-	update(deltaTime, player) {
+	update(deltaTime: number) {
 		// delete enemies that are destroyed
 		this.enemies = this.enemies.filter((enemy) => !enemy.destroyed);
 
 		this.enemies.forEach((enemy) => {
-			enemy.update(deltaTime, player);
+			enemy.update(deltaTime);
 		});
 	}
 
-	getClosestEnemy(position: { x: number; y: number }) {
+	getClosestEnemy(position: { x: number; y: number }): Enemy | undefined {
 		let point = { x: position.x, y: -position.y };
 		let solid = true;
 
-		let proj = world.projectPoint(point, solid, null, 0x00020002);
+		let proj = this.game.world.projectPoint(point, solid, undefined, 0x00020002);
 
 		if (proj) {
-			return proj.collider._parent.userData;
+			let enemy = proj.collider.parent()?.userData as Enemy;
+			return enemy;
 		}
 	}
 }
