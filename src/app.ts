@@ -123,7 +123,7 @@ export default class Game {
 			}
 
 			if (enemy && projectile) {
-				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10);
+				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, this.player?.color);
 
 				enemy.takeDamage(projectile.damage);
 				projectile.destroy();
@@ -131,13 +131,13 @@ export default class Game {
 		});
 	}
 
-	spawnParticles(x: number, y: number, num: number) {
+	spawnParticles(x: number, y: number, num: number, color: number = 0xffffff) {
 		for (let i = 0; i < num; i++) {
 			this.particleSystem?.createParticle(
 				x,
 				y,
 				Math.random() * 5 + 5, // size
-				this.player?.color ?? 0xffffff, // color
+				color, // color
 				Math.random() * 0.5 + 0.5, // alpha
 				(Math.random() - 0.5) * 0.3, // speedX
 				(Math.random() - 0.5) * 0.3, // speedY

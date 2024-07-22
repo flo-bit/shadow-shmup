@@ -1,4 +1,3 @@
-import * as PIXI from 'pixi.js';
 import Game from './app';
 import { Projectile } from './projectile';
 
@@ -76,7 +75,7 @@ export class Weapon {
 
 			if (distanceSquared > 1000000) {
 				// 1000 units squared
-				projectile.destroy(this.game);
+				projectile.destroy();
 				this.projectiles.splice(i, 1);
 			}
 		}
@@ -84,7 +83,7 @@ export class Weapon {
 
 	clearAllProjectiles() {
 		for (let projectile of this.projectiles) {
-			projectile.destroy(this.game);
+			projectile.destroy();
 		}
 		this.projectiles = [];
 	}

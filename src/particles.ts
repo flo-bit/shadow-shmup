@@ -75,7 +75,6 @@ export default class ParticleSystem {
 	}
 
 	update(delta: number): void {
-		console.log('update particles', this.particles.length);
 		for (let i = this.particles.length - 1; i >= 0; i--) {
 			const particle = this.particles[i];
 			particle.x += particle.speedX * delta;

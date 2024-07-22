@@ -4,7 +4,6 @@ import * as PIXI from 'pixi.js';
 import Game from './app';
 import { RAPIER } from './rapier';
 import { type RigidBody } from '@dimforge/rapier2d';
-import EnemyManager from './enemy-manager.js';
 
 /**
  * Player class
@@ -73,17 +72,6 @@ export default class Player {
 	}
 
 	async createLight() {
-		// const light = new PIXI.Graphics();
-
-		// // make a light source by drawing a circle with some opacity and getting smaller and smaller
-		// for (let i = 0; i < 100; i++) {
-		// 	const alpha = 0.1 * Math.pow(1 - i / 100, 4);
-		// 	const radius = i * 4;
-		// 	light.circle(0, 0, radius).fill({ color: 0xffffff, alpha });
-		// }
-
-		// this.playerContainer.addChild(light);
-
 		const texture = await PIXI.Assets.load('/light.png');
 		const light = PIXI.Sprite.from(texture);
 		light.anchor.set(0.5);
@@ -168,7 +156,9 @@ export default class Player {
 		this.y += dy * this.speed * deltaTime;
 
 		// get closest enemy
-		const closestEnemy = this.game.enemyManager?.getClosestEnemy(this.position);
+		const closestEnemy = this.game.enemyManager?.getClosestEnemy(this.position, 200);
+
+		//
 
 		if (closestEnemy) {
 			this.weapon.fire(this.position, closestEnemy.position);

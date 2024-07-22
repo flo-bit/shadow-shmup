@@ -37,13 +37,29 @@ export default class Enemy {
 		this.size = 30;
 
 		this.enemyContainer = new PIXI.Container();
+
+		
 		this.enemyContainer.x = Math.random() * 800 - 400;
 		this.enemyContainer.y = Math.random() * 800 - 400;
+
+		// get player position
+		let position = this.game.player?.position;
+		if (position) {
+			// create random direction vector
+			let point = { x: Math.random() - 0.5, y: Math.random() - 0.5 };
+			// set length to 600 (normalize and mutliply)
+			let length = 600;
+			let norm = Math.sqrt(point.x * point.x + point.y * point.y);
+			point.x = (point.x / norm) * length;
+			point.y = (point.y / norm) * length;
+
+			this.enemyContainer.x = position.x + point.x;
+			this.enemyContainer.y = position.y + point.y;
+		}
 
 		game.container.addChild(this.enemyContainer);
 
 		this.shape = new PIXI.Graphics().circle(0, 0, this.size / 2).fill(0x070707);
-		//this.shape.pivot.set(this.size / 2, this.size / 2);
 		this.enemyContainer.addChild(this.shape);
 
 		this.maxHealth = 100;
@@ -141,9 +157,6 @@ export default class Enemy {
 
 		// Only move if not too close to the player and not exploding
 		if (distance > this.size + 10 && !this.exploding) {
-			// this.x += (dx / distance) * this.speed * deltaTime;
-			// this.y += (dy / distance) * this.speed * deltaTime;
-
 			// lets add some force instead of moving it directly, the further away the player, the more force
 			const force = 500;
 
@@ -152,7 +165,7 @@ export default class Enemy {
 
 			this.rigidBody?.applyImpulse({ x: x * force, y: -y * force }, true);
 		} else if (!this.exploding) {
-			//this.exploding = true;
+			this.exploding = true;
 			this.destroyTime = 2000;
 		} else {
 			this.destroyTime -= deltaTime;
@@ -162,6 +175,7 @@ export default class Enemy {
 				if (distance < this.size + 20) {
 					player.takeDamage(20);
 				}
+				return;
 			}
 		}
 
@@ -169,8 +183,11 @@ export default class Enemy {
 	}
 
 	destroy() {
+		this.game.spawnParticles(this.x, this.y, 50, 0);
+
 		this.destroyed = true;
 		// remove the square
+		this.enemyContainer.destroy();
 		this.shape.destroy();
 		if (this.rigidBody) this.game.world.removeRigidBody(this.rigidBody);
 	}
