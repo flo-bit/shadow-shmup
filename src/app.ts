@@ -7,8 +7,6 @@ import ParticleSystem from './particles.js';
 import { Projectile } from './projectile.js';
 import Enemy from './enemy.js';
 
-import { AdvancedBloomFilter, OldFilmFilter, PixelateFilter } from 'pixi-filters';
-
 export default class Game {
 	container: PIXI.Container;
 	world!: World;
@@ -21,6 +19,8 @@ export default class Game {
 	enemyManager?: EnemyManager;
 
 	particleSystem?: ParticleSystem;
+
+	debug: boolean = false;
 
 	constructor() {
 		this.setup();
@@ -64,8 +64,6 @@ export default class Game {
 		app.stage.addChild(this.container);
 
 		this.container.position.set(window.innerWidth / 2, window.innerHeight / 2);
-
-		//this.container.filters = [new AdvancedBloomFilter(), new PixelateFilter(6)];
 
 		// add a resize event listener
 		window.addEventListener('resize', () => {
@@ -160,7 +158,7 @@ export default class Game {
 			this.enemyManager?.addEnemy();
 		}
 
-		//this.renderPhysicsDebug();
+		if (this.debug) this.renderPhysicsDebug();
 	}
 
 	handleKeyDown(e: KeyboardEvent) {
