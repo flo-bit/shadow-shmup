@@ -4,6 +4,7 @@ import * as PIXI from 'pixi.js';
 import Game from './app';
 import { RAPIER } from './rapier';
 import { type RigidBody } from '@dimforge/rapier2d';
+import Eye from './eye.js';
 
 /**
  * Player class
@@ -63,12 +64,14 @@ export default class Player {
 
 		this.createHealthBar();
 
-		this.speed = 0.4;
+		this.speed = 10000;
 		this.shape = shape;
 
 		this.weapon = new Weapon(this.game, this.color);
 
 		this.isPlayer = true;
+
+		//let eye = new Eye(this.playerContainer);
 	}
 
 	async createLight() {
@@ -98,9 +101,10 @@ export default class Player {
 
 	createRigidBody() {
 		const rigidBodyDesc = RAPIER()
-			.RigidBodyDesc.kinematicPositionBased()
+			.RigidBodyDesc.dynamic()
 			.setTranslation(0, 0)
-			.lockRotations();
+			.lockRotations()
+			.setLinearDamping(10);
 		this.rigidBody = this.game.world.createRigidBody(rigidBodyDesc);
 
 		const colliderDesc = RAPIER()
@@ -113,6 +117,8 @@ export default class Player {
 	}
 
 	get x() {
+		if (this.rigidBody) return this.rigidBody.translation().x;
+
 		return this.playerContainer.x;
 	}
 	set x(value) {
@@ -121,6 +127,8 @@ export default class Player {
 	}
 
 	get y() {
+		if (this.rigidBody) return -this.rigidBody.translation().y;
+
 		return this.playerContainer.y;
 	}
 	set y(value) {
@@ -129,6 +137,11 @@ export default class Player {
 	}
 
 	get position() {
+		if (this.rigidBody) {
+			let v = this.rigidBody.translation();
+			return { x: v.x, y: -v.y };
+		}
+
 		return this.playerContainer.position;
 	}
 	set position(value) {
@@ -152,8 +165,9 @@ export default class Player {
 			dy *= Math.SQRT1_2;
 		}
 
-		this.x += dx * this.speed * deltaTime;
-		this.y += dy * this.speed * deltaTime;
+		//this.x += dx * this.speed * deltaTime;
+		//this.y += dy * this.speed * deltaTime;
+		this.rigidBody?.applyImpulse({ x: dx * this.speed, y: -dy * this.speed }, true);
 
 		// get closest enemy
 		const closestEnemy = this.game.enemyManager?.getClosestEnemy(this.position, 200);
@@ -167,6 +181,8 @@ export default class Player {
 		this.weapon.update(deltaTime);
 
 		this.drawShadow();
+
+		this.playerContainer.position.set(this.x, this.y);
 	}
 
 	drawShadow() {

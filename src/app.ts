@@ -7,6 +7,8 @@ import ParticleSystem from './particles.js';
 import { Projectile } from './projectile.js';
 import Enemy from './enemy.js';
 
+import Stats from 'stats.js';
+
 export default class Game {
 	container: PIXI.Container;
 	world!: World;
@@ -21,6 +23,8 @@ export default class Game {
 	particleSystem?: ParticleSystem;
 
 	debug: boolean = false;
+
+	stats?: Stats;
 
 	constructor() {
 		this.setup();
@@ -73,6 +77,8 @@ export default class Game {
 		});
 
 		app.ticker.add((ticker) => {
+			if (this.stats) this.stats.begin();
+
 			// get ellapsed time
 			const deltaTime = ticker.deltaMS;
 
@@ -84,6 +90,7 @@ export default class Game {
 			}
 			this.particleSystem?.update(deltaTime);
 			this.update(deltaTime);
+			if (this.stats) this.stats.end();
 		});
 
 		this.player = new Player(this);
@@ -92,6 +99,11 @@ export default class Game {
 
 		window.addEventListener('keydown', this.handleKeyDown.bind(this));
 		window.addEventListener('keyup', this.handleKeyUp.bind(this));
+
+		if (this.debug) {
+			this.stats = new Stats();
+			document.body.appendChild(this.stats.dom);
+		}
 	}
 
 	handleCollisionEvents(eventQueue: EventQueue) {
@@ -123,8 +135,8 @@ export default class Game {
 			if (enemy && projectile) {
 				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, this.player?.color);
 
-				enemy.takeDamage(projectile.damage);
-				projectile.destroy();
+				enemy.takeDamage(projectile.damage * 5);
+				//projectile.destroy();
 			}
 		});
 	}
@@ -154,7 +166,7 @@ export default class Game {
 
 		this.enemyManager?.update(deltaTime);
 
-		if (Math.random() < deltaTime * 0.002) {
+		if (Math.random() < deltaTime * 0.02) {
 			this.enemyManager?.addEnemy();
 		}
 

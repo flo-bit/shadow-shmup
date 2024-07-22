@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 import Game from './app';
 import { RAPIER } from './rapier';
 import { type RigidBody } from '@dimforge/rapier2d';
+import Eye from './eye';
 
 export default class Enemy {
 	game: Game;
@@ -30,6 +31,11 @@ export default class Enemy {
 
 	rigidBody?: RigidBody;
 
+	leftEye: Eye;
+	rightEye: Eye;
+
+	eyes: PIXI.Container;
+
 	constructor(game: Game) {
 		this.game = game;
 		// add a square
@@ -38,7 +44,6 @@ export default class Enemy {
 
 		this.enemyContainer = new PIXI.Container();
 
-		
 		this.enemyContainer.x = Math.random() * 800 - 400;
 		this.enemyContainer.y = Math.random() * 800 - 400;
 
@@ -79,6 +84,12 @@ export default class Enemy {
 		this.destroyed = false;
 
 		this.isEnemy = true;
+
+		this.eyes = new PIXI.Container();
+		this.enemyContainer.addChild(this.eyes);
+
+		this.leftEye = new Eye(this.eyes, -this.size / 4, 0);
+		this.rightEye = new Eye(this.eyes, this.size / 4, 0);
 	}
 
 	createHealthBar() {
@@ -154,6 +165,15 @@ export default class Enemy {
 		let dy = player.y - this.y;
 
 		const distance = Math.sqrt(dx * dx + dy * dy);
+
+		// get angle between enemy and player
+		// move eyes
+		this.leftEye.move(dx, dy);
+		this.rightEye.move(dx, dy);
+
+		let alpha = Math.min(1, 1 - distance / 300);
+		this.leftEye.transparency(alpha);
+		this.rightEye.transparency(alpha);
 
 		// Only move if not too close to the player and not exploding
 		if (distance > this.size + 10 && !this.exploding) {
