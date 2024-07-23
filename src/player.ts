@@ -81,7 +81,7 @@ export default class Player {
 	}
 
 	async createLight() {
-		const texture = await PIXI.Assets.load('/light.png');
+		const texture = await PIXI.Assets.load('/shadow-shmup/light.png');
 		this.light = PIXI.Sprite.from(texture);
 		this.light.tint = 0xfda4af;
 		this.light.anchor.set(0.5);
