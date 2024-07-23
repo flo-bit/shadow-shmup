@@ -165,10 +165,10 @@ export default class Player {
 		if (this.game.playing) {
 			let dx = 0,
 				dy = 0;
-			if (keys['w']) dy -= 1;
-			if (keys['s']) dy += 1;
-			if (keys['a']) dx -= 1;
-			if (keys['d']) dx += 1;
+			if (this.game.controls.up) dy -= 1;
+			if (this.game.controls.down) dy += 1;
+			if (this.game.controls.left) dx -= 1;
+			if (this.game.controls.right) dx += 1;
 
 			// Normalize diagonal movement
 			if (dx !== 0 && dy !== 0) {
