@@ -15,6 +15,7 @@ import PlayerManager from './player-manager.js';
 import ProjectileManager, { ProjectileData } from './projectile-manager.js';
 
 import { sound } from '@pixi/sound';
+import Controls from './controls.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -37,6 +38,8 @@ export default class Game {
 
 	playing: boolean = false;
 
+	controls: Controls;
+
 	constructor() {
 		this.setup();
 
@@ -44,6 +47,8 @@ export default class Game {
 
 		window.container = this.container;
 		window.game = this;
+
+		this.controls = new Controls();
 
 		sound.add('music-intro', {
 			url: '/shadow-shmup/music-intro.mp3'
@@ -251,7 +256,8 @@ export default class Game {
 
 		this.projectileManager?.update(deltaTime);
 
-		if (this.playerManager?.players[0].health <= 0) {
+		let player = this.playerManager?.players[0];
+		if (player && player.health <= 0) {
 			this.enemyManager?.killAll();
 			this.projectileManager?.clearAllProjectiles();
 
