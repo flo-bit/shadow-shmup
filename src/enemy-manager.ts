@@ -1,5 +1,5 @@
 import Game from './app.js';
-import Enemy from './enemy.js';
+import Enemy, { PentagonEnemy, TriangleEnemy } from './enemy.js';
 
 export default class EnemyManager {
 	game: Game;
@@ -15,7 +15,10 @@ export default class EnemyManager {
 	}
 
 	addEnemy() {
-		const enemy = new Enemy(this.game);
+		let enemyTypes = [Enemy, TriangleEnemy, PentagonEnemy];
+		const randomIndex = Math.floor(Math.random() * enemyTypes.length);
+
+		const enemy = new enemyTypes[randomIndex](this.game);
 		this.enemies.push(enemy);
 	}
 
@@ -40,9 +43,7 @@ export default class EnemyManager {
 			if (!enemy) return;
 
 			// check if enemy is within max distance
-			const dist = Math.sqrt(
-				(enemy.enemyContainer.x - position.x) ** 2 + (enemy.enemyContainer.y - position.y) ** 2
-			);
+			const dist = Math.sqrt((enemy.x - position.x) ** 2 + (enemy.y - position.y) ** 2);
 
 			if (dist < maxDist) {
 				return enemy;

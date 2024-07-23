@@ -23,3 +23,31 @@ npm run dev
 ```
 
 4. Open the game in your browser at [http://localhost:5173](http://localhost:5173)
+
+
+## TODO
+
+# shadow shmup
+
+- count enemies killed
+- enemies attack
+    - shoot
+    - ram
+    - pulse
+    - explode
+- die
+- weapons
+    - recoil on player
+    - impulse on bullet impact
+    - different weapons (different shooting mechanics, colors)
+    - show weapon
+- [x] change player rigidbody to dynamic
+- different enemies
+    - different shapes, attacks
+- waves
+- [x] eyes blinking
+- [x] obstacles
+- [ ] enemies drop stuff, player can pick it up
+- [ ] music
+- [ ] sound effects
+- [ ] menu: solo, co-op, credits

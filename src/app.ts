@@ -8,6 +8,10 @@ import { Projectile } from './projectile.js';
 import Enemy from './enemy.js';
 
 import Stats from 'stats.js';
+import Obstacle from './obstacles.js';
+
+import { AdvancedBloomFilter } from 'pixi-filters';
+import PlayerManager from './player-manager.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -17,8 +21,8 @@ export default class Game {
 
 	debugGraphics?: PIXI.Graphics;
 
-	player?: Player;
 	enemyManager?: EnemyManager;
+	playerManager?: PlayerManager;
 
 	particleSystem?: ParticleSystem;
 
@@ -61,6 +65,15 @@ export default class Game {
 		this.particleSystem = new ParticleSystem(app);
 		this.container.addChild(this.particleSystem.container);
 
+		// add a bloom filter
+		const bloomFilter = new AdvancedBloomFilter({
+			threshold: 0.2,
+			quality: 32,
+			bloomScale: 1,
+			blur: 4
+		});
+		app.stage.filters = [bloomFilter];
+
 		// add the canvas to the HTML document
 		document.body.appendChild(app.canvas);
 
@@ -93,8 +106,7 @@ export default class Game {
 			if (this.stats) this.stats.end();
 		});
 
-		this.player = new Player(this);
-
+		this.playerManager = new PlayerManager(this);
 		this.enemyManager = new EnemyManager(this, 10);
 
 		window.addEventListener('keydown', this.handleKeyDown.bind(this));
@@ -103,6 +115,10 @@ export default class Game {
 		if (this.debug) {
 			this.stats = new Stats();
 			document.body.appendChild(this.stats.dom);
+		}
+
+		for (let i = 0; i < 50; i++) {
+			let obstacle = new Obstacle(this);
 		}
 	}
 
@@ -122,21 +138,27 @@ export default class Game {
 
 			let enemy: Enemy | undefined;
 			let projectile: Projectile | undefined;
+			let player: Player | undefined;
 
-			// new way to check with instanceof
-			if (userData1 instanceof Enemy && userData2 instanceof Projectile) {
-				enemy = userData1;
-				projectile = userData2;
-			} else if (userData2 instanceof Enemy && userData1 instanceof Projectile) {
-				enemy = userData2;
-				projectile = userData1;
-			}
+			if (userData1 instanceof Enemy) enemy = userData1;
+			if (userData2 instanceof Enemy) enemy = userData2;
+
+			if (userData1 instanceof Projectile) projectile = userData1;
+			if (userData2 instanceof Projectile) projectile = userData2;
+
+			if (userData1 instanceof Player) player = userData1;
+			if (userData2 instanceof Player) player = userData2;
 
 			if (enemy && projectile) {
-				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, this.player?.color);
+				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, projectile.color);
 
-				enemy.takeDamage(projectile.damage * 5);
+				enemy.impulse(projectile.vx * 200000, -projectile.vy * 200000);
+				enemy.takeDamage(projectile.damage);
 				//projectile.destroy();
+			}
+
+			if (enemy && player && enemy.hitPlayer) {
+				enemy.hitPlayer(player);
 			}
 		});
 	}
@@ -162,11 +184,11 @@ export default class Game {
 	 */
 	update(deltaTime: number) {
 		// update game state here
-		this.player?.update(deltaTime, this.keys);
+		this.playerManager?.update(deltaTime, this.keys);
 
 		this.enemyManager?.update(deltaTime);
 
-		if (Math.random() < deltaTime * 0.02) {
+		if (Math.random() < deltaTime * 0.005) {
 			this.enemyManager?.addEnemy();
 		}
 

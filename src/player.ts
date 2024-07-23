@@ -38,10 +38,15 @@ export default class Player {
 
 	color: number;
 
+	light?: PIXI.Sprite;
+
+	leftEye: Eye;
+	rightEye: Eye;
+
 	constructor(game: Game) {
 		this.game = game;
 
-		this.size = 20;
+		this.size = 25;
 
 		this.maxHealth = 100;
 		this.health = this.maxHealth;
@@ -64,26 +69,28 @@ export default class Player {
 
 		this.createHealthBar();
 
-		this.speed = 10000;
+		this.speed = 30000;
 		this.shape = shape;
 
 		this.weapon = new Weapon(this.game, this.color);
 
 		this.isPlayer = true;
 
-		//let eye = new Eye(this.playerContainer);
+		this.leftEye = new Eye(this.playerContainer, -this.size / 4, 0);
+		this.rightEye = new Eye(this.playerContainer, this.size / 4, 0);
 	}
 
 	async createLight() {
 		const texture = await PIXI.Assets.load('/light.png');
-		const light = PIXI.Sprite.from(texture);
-		light.anchor.set(0.5);
-		light.scale.set(0.5);
-		light.zIndex = -1;
+		this.light = PIXI.Sprite.from(texture);
+		this.light.tint = 0xfda4af;
+		this.light.anchor.set(0.5);
+		this.light.scale.set(0.5);
+		this.light.zIndex = -1;
 
-		this.playerContainer.addChild(light);
+		this.playerContainer.addChild(this.light);
 
-		light.mask = this.shadow;
+		this.light.mask = this.shadow;
 	}
 
 	createHealthBar() {
@@ -165,17 +172,30 @@ export default class Player {
 			dy *= Math.SQRT1_2;
 		}
 
-		//this.x += dx * this.speed * deltaTime;
-		//this.y += dy * this.speed * deltaTime;
-		this.rigidBody?.applyImpulse({ x: dx * this.speed, y: -dy * this.speed }, true);
+		if (this.light) {
+			this.light.scale = 0.5 + Math.random() * 0.05;
+			this.light.alpha = 0.2 + Math.random() * 0.01;
+		}
+
+		this.leftEye.update(deltaTime, 1);
+		this.rightEye.update(deltaTime, 1);
+
+		if (dx || dy) this.rigidBody?.applyImpulse({ x: dx * this.speed, y: -dy * this.speed }, true);
 
 		// get closest enemy
 		const closestEnemy = this.game.enemyManager?.getClosestEnemy(this.position, 200);
 
-		//
-
 		if (closestEnemy) {
 			this.weapon.fire(this.position, closestEnemy.position);
+
+			// get angle between enemy and player
+			const dx = closestEnemy.x - this.x;
+			const dy = closestEnemy.y - this.y;
+			const angle = Math.atan2(dy, dx);
+
+			// move eyes
+			this.leftEye.move(angle);
+			this.rightEye.move(angle);
 		}
 
 		this.weapon.update(deltaTime);
@@ -204,7 +224,7 @@ export default class Player {
 				{ x: Math.cos(angle), y: Math.sin(angle) }
 			);
 
-			const hit = this.game.world.castRay(ray, rayLength, true, undefined, 0x00020002);
+			const hit = this.game.world.castRay(ray, rayLength, false, undefined, 0x000a000a);
 
 			let hitPoint = hit
 				? ray.pointAt(hit.toi)

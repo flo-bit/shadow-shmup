@@ -14,7 +14,9 @@ export class Weapon {
 
 	color: number;
 
-	constructor(game: Game, color: number) {
+	collisionGroups: number;
+
+	constructor(game: Game, color: number, collisionGroups: number = 0x00040002) {
 		this.game = game;
 
 		this.cooldown = 0;
@@ -26,10 +28,13 @@ export class Weapon {
 		this.projectileSize = 5;
 
 		this.color = color;
+
+		this.collisionGroups = collisionGroups;
 	}
 
 	fire(position: { x: number; y: number }, enemyPosition: { x: number; y: number }) {
 		if (this.cooldown <= 0) {
+			console.log('Firing');
 			this.createProjectile(position, enemyPosition, 0);
 			this.cooldown = this.fireRate;
 		}
@@ -48,7 +53,8 @@ export class Weapon {
 			this.projectileSize,
 			this.damage,
 			this.color,
-			angleOffset
+			angleOffset,
+			this.collisionGroups
 		);
 
 		this.projectiles.push(projectile);
@@ -65,15 +71,12 @@ export class Weapon {
 			}
 			projectile.update(deltaTime);
 
-			// Check if projectile is too far from the player
-			const playerPos = this.game.player?.position;
-			if (!playerPos) return;
-
-			const dx = projectile.shape.x - playerPos.x;
-			const dy = projectile.shape.y - playerPos.y;
+			// Check if projectile is too far from 0, 0
+			const dx = projectile.shape.x;
+			const dy = projectile.shape.y;
 			const distanceSquared = dx * dx + dy * dy;
 
-			if (distanceSquared > 1000000) {
+			if (distanceSquared > 100000000) {
 				// 1000 units squared
 				projectile.destroy();
 				this.projectiles.splice(i, 1);

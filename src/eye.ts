@@ -3,14 +3,24 @@ import * as PIXI from 'pixi.js';
 export default class Eye {
 	eyeContainer: PIXI.Container;
 
-	base?: PIXI.Sprite;
-	pupil?: PIXI.Sprite;
+	base?: PIXI.Graphics;
+	pupil?: PIXI.Graphics;
 	highlight?: PIXI.Sprite;
+
+	mask?: PIXI.Graphics;
+
+	// how long one blink takes, split into four parts [close animation, closed, open animation, open]
+	blinkSpeed: [number, number, number, number] = [0.1, 0.1, 0.1, 1];
+
+	private blinkTimer: number = 0;
+	private blinkState: number = 3; // Start with eyes open
+
+	dx: number = 0;
+	dy: number = 0;
 
 	constructor(container: PIXI.Container, shiftX: number, shiftY: number) {
 		this.eyeContainer = new PIXI.Container();
 
-		//this.eyeContainer.scale.set(0.01);
 		this.eyeContainer.position.set(shiftX, shiftY);
 
 		container.addChild(this.eyeContainer);
@@ -18,50 +28,61 @@ export default class Eye {
 	}
 
 	async loadLayers() {
-		// const texture = await PIXI.Assets.load('/eye/0.png');
-		// this.base = PIXI.Sprite.from(texture);
-		// this.base.anchor.set(0.5);
-		// this.base.zIndex = 3;
-		// this.eyeContainer.addChild(this.base);
-
-		// const pupilTexture = await PIXI.Assets.load('/eye/1.png');
-		// this.pupil = PIXI.Sprite.from(pupilTexture);
-		// this.pupil.anchor.set(0.5);
-		// this.pupil.zIndex = 4;
-		// this.eyeContainer.addChild(this.pupil);
-
-		// const highlightTexture = await PIXI.Assets.load('/eye/2.png');
-		// this.highlight = PIXI.Sprite.from(highlightTexture);
-		// this.highlight.anchor.set(0.5);
-		// this.highlight.zIndex = 5;
-		// this.eyeContainer.addChild(this.highlight);
-
-		// using graphics for now
-		const base = new PIXI.Graphics().ellipse(0, 0, 5, 4).fill(0xffffff);
+		const base = new PIXI.Graphics().ellipse(0, 0, 5, 4).fill(0xffffff); //.fill(0xe11d48);
 		this.base = base;
+		this.base.alpha = 0;
 		this.eyeContainer.addChild(base);
 
 		const pupil = new PIXI.Graphics().circle(0, 0, 3).fill(0x000000);
 		this.pupil = pupil;
 		this.eyeContainer.addChild(pupil);
 
-		//const highlight = new PIXI.Graphics().circle(0, 0, 10).fill(0xffffff);
-		//this.highlight = highlight;
-		//this.eyeContainer.addChild(highlight);
+		const mask = new PIXI.Graphics().ellipse(0, 0, 5, 4).fill(0xffffff);
+		this.mask = mask;
+		this.eyeContainer.addChild(mask);
+
+		this.eyeContainer.mask = mask;
 	}
 
-	move(dx: number, dy: number) {
-		// normalize
-		const len = Math.sqrt(dx ** 2 + dy ** 2);
+	move(angle: number) {
+		const newDx = Math.cos(angle);
+		const newDy = Math.sin(angle);
 
-		this.pupil?.position.set((dx / len) * 2, (dy / len) * 2);
+		this.dx = this.dx * 0.9 + newDx * 0.1;
+		this.dy = this.dy * 0.9 + newDy * 0.1;
+
+		this.pupil?.position.set(this.dx * 2, this.dy * 2);
 	}
 
-	transparency(alpha: number) {
-		if (!this.base || !this.pupil) return;
+	update(deltaTime: number, alpha: number) {
+		if (this.base) this.base.alpha = alpha;
 
-		this.base.alpha = alpha;
-		//this.pupil.alpha = alpha;
-		//this.highlight.alpha = alpha;
+		deltaTime /= 1000;
+
+		// Blink animation
+		this.blinkTimer += deltaTime;
+
+		if (this.blinkTimer >= this.blinkSpeed[this.blinkState]) {
+			this.blinkTimer = 0;
+			this.blinkState = (this.blinkState + 1) % 4;
+		}
+
+		if (this.mask) {
+			let scale: number;
+			switch (this.blinkState) {
+				case 0: // Closing
+					scale = 1 - this.blinkTimer / this.blinkSpeed[0];
+					break;
+				case 1: // Closed
+					scale = 0;
+					break;
+				case 2: // Opening
+					scale = this.blinkTimer / this.blinkSpeed[2];
+					break;
+				default: // Open
+					scale = 1;
+			}
+			this.mask.scale.y = scale;
+		}
 	}
 }

@@ -1,13 +1,19 @@
 import * as PIXI from 'pixi.js';
 import Game from './app';
 import { RAPIER } from './rapier';
-import { type RigidBody } from '@dimforge/rapier2d';
+import { Vector2, type RigidBody } from '@dimforge/rapier2d';
 import Eye from './eye';
+import Player from './player';
+import { Weapon } from './weapon';
 
-export default class Enemy {
+interface PlayerHit {
+	hitPlayer?(player: Player): void;
+}
+
+export default class Enemy implements PlayerHit {
 	game: Game;
 
-	size: number;
+	size: number = 30;
 
 	enemyContainer: PIXI.Container;
 
@@ -16,11 +22,11 @@ export default class Enemy {
 
 	healthBar?: PIXI.Graphics;
 
-	damage: number;
+	damage: number = 10;
 
-	speed: number;
+	speed: number = 0.05;
 
-	shape: PIXI.Graphics;
+	shape?: PIXI.Graphics;
 
 	exploding: boolean;
 	destroyTime: number;
@@ -36,11 +42,10 @@ export default class Enemy {
 
 	eyes: PIXI.Container;
 
+	hitPlayer?(player: Player): void;
+
 	constructor(game: Game) {
 		this.game = game;
-		// add a square
-
-		this.size = 30;
 
 		this.enemyContainer = new PIXI.Container();
 
@@ -48,12 +53,11 @@ export default class Enemy {
 		this.enemyContainer.y = Math.random() * 800 - 400;
 
 		// get player position
-		let position = this.game.player?.position;
+		let position = this.game.playerManager?.getClosestPlayer(this.position)?.position;
 		if (position) {
 			// create random direction vector
 			let point = { x: Math.random() - 0.5, y: Math.random() - 0.5 };
-			// set length to 600 (normalize and mutliply)
-			let length = 600;
+			let length = 1000;
 			let norm = Math.sqrt(point.x * point.x + point.y * point.y);
 			point.x = (point.x / norm) * length;
 			point.y = (point.y / norm) * length;
@@ -64,19 +68,14 @@ export default class Enemy {
 
 		game.container.addChild(this.enemyContainer);
 
-		this.shape = new PIXI.Graphics().circle(0, 0, this.size / 2).fill(0x070707);
-		this.enemyContainer.addChild(this.shape);
+		this.createShape();
 
 		this.maxHealth = 100;
 		this.health = this.maxHealth;
 
-		this.createHealthBar();
+		if (game.debug) this.createHealthBar();
 
 		this.createRidigBody();
-
-		this.damage = 10; // Damage dealt to player on contact
-
-		this.speed = 0.05;
 
 		this.exploding = false;
 		this.destroyTime = -1;
@@ -91,11 +90,15 @@ export default class Enemy {
 		this.leftEye = new Eye(this.eyes, -this.size / 4, 0);
 		this.rightEye = new Eye(this.eyes, this.size / 4, 0);
 	}
+	createShape() {
+		this.shape = new PIXI.Graphics().circle(0, 0, this.size / 2).fill(0);
+		this.enemyContainer.addChild(this.shape);
+	}
 
 	createHealthBar() {
 		const healthBarWidth = this.size;
-		const healthBarHeight = 5;
-		this.healthBar = new PIXI.Graphics().rect(0, 0, healthBarWidth, healthBarHeight).fill(0);
+		const healthBarHeight = 2;
+		this.healthBar = new PIXI.Graphics().rect(0, 0, healthBarWidth, healthBarHeight).fill(0x00ff00);
 
 		this.healthBar.position.set(0, -this.size);
 		this.healthBar.pivot.set(healthBarWidth / 2, healthBarHeight / 2);
@@ -155,8 +158,23 @@ export default class Enemy {
 		this.rigidBody?.setTranslation({ x: this.x, y: -this.y }, true);
 	}
 
+	get rotation() {
+		if (this.rigidBody) return -this.rigidBody.rotation();
+
+		return this.enemyContainer.rotation;
+	}
+
+	set rotation(value) {
+		this.enemyContainer.rotation = value;
+		this.rigidBody?.setRotation(-value, true);
+	}
+
+	impulse(x: number, y: number) {
+		this.rigidBody?.applyImpulse({ x, y }, true);
+	}
+
 	update(deltaTime: number) {
-		let player = this.game.player;
+		let player = this.game.playerManager?.getClosestPlayer(this.position);
 
 		if (this.destroyed || !player) return;
 
@@ -167,13 +185,15 @@ export default class Enemy {
 		const distance = Math.sqrt(dx * dx + dy * dy);
 
 		// get angle between enemy and player
+		const angle = Math.atan2(dy, dx);
 		// move eyes
-		this.leftEye.move(dx, dy);
-		this.rightEye.move(dx, dy);
+		this.leftEye.move(angle);
+		this.rightEye.move(angle);
 
 		let alpha = Math.min(1, 1 - distance / 300);
-		this.leftEye.transparency(alpha);
-		this.rightEye.transparency(alpha);
+
+		this.leftEye.update(deltaTime, alpha);
+		this.rightEye.update(deltaTime, alpha);
 
 		// Only move if not too close to the player and not exploding
 		if (distance > this.size + 10 && !this.exploding) {
@@ -203,12 +223,12 @@ export default class Enemy {
 	}
 
 	destroy() {
-		this.game.spawnParticles(this.x, this.y, 50, 0);
+		this.game.spawnParticles(this.x, this.y, 50, 0xe11d48);
 
 		this.destroyed = true;
 		// remove the square
 		this.enemyContainer.destroy();
-		this.shape.destroy();
+		this.shape?.destroy();
 		if (this.rigidBody) this.game.world.removeRigidBody(this.rigidBody);
 	}
 
@@ -220,5 +240,162 @@ export default class Enemy {
 		if (this.health <= 0) {
 			this.destroy();
 		}
+	}
+}
+
+export class TriangleEnemy extends Enemy {
+	createShape(): void {
+		this.size = 20;
+		this.shape = new PIXI.Graphics()
+			.poly([-this.size, -this.size / 2, this.size, -this.size / 2, 0, this.size])
+			.fill(0);
+		this.enemyContainer.addChild(this.shape);
+	}
+
+	createRidigBody(): void {
+		const rigidBodyDesc = RAPIER()
+			.RigidBodyDesc.dynamic()
+			.setTranslation(this.x, this.y)
+			.lockRotations()
+			.setLinearDamping(0.3);
+		this.rigidBody = this.game.world.createRigidBody(rigidBodyDesc);
+
+		const colliderDesc = RAPIER()
+			.ColliderDesc.triangle(
+				new Vector2(-this.size, this.size / 2),
+				new Vector2(this.size, this.size / 2),
+				new Vector2(0, -this.size)
+			)
+			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
+			.setCollisionGroups(0x00020007);
+
+		this.game.world.createCollider(colliderDesc, this.rigidBody);
+
+		this.rigidBody.userData = this;
+	}
+
+	update(deltaTime: number) {
+		let player = this.game.playerManager?.getClosestPlayer(this.position);
+
+		if (this.destroyed || !player) return;
+
+		// move the player, wasd
+		let dx = player.x - this.x;
+		let dy = player.y - this.y;
+
+		const distance = Math.sqrt(dx * dx + dy * dy);
+
+		// get angle between enemy and player
+		const angle = Math.atan2(dy, dx);
+
+		this.rotation = angle - Math.PI / 2;
+
+		// move eyes
+		this.leftEye.move(Math.PI / 2);
+		this.rightEye.move(Math.PI / 2);
+
+		let alpha = Math.min(1, 1 - distance / 300);
+		this.leftEye.update(deltaTime, alpha);
+		this.rightEye.update(deltaTime, alpha);
+
+		const force = 600;
+
+		const x = dx / distance;
+		const y = dy / distance;
+
+		this.rigidBody?.applyImpulse({ x: x * force, y: -y * force }, true);
+
+		this.enemyContainer.position.set(this.x, this.y);
+	}
+
+	hitPlayer(player: Player) {
+		console.log('hit player');
+	}
+}
+
+export class PentagonEnemy extends Enemy {
+	//weapon: Weapon;
+
+	constructor(game: Game) {
+		super(game);
+
+		//this.weapon = new Weapon(this.game, 0x00ff00, 0x00040001);
+	}
+
+	createShape(): void {
+		this.size = 30;
+		const points: number[] = [];
+		for (let i = 0; i < 5; i++) {
+			const angle = (i / 5) * Math.PI * 2;
+			points.push(Math.cos(angle) * this.size, Math.sin(angle) * this.size);
+		}
+		this.shape = new PIXI.Graphics().poly(points).fill(0);
+		this.enemyContainer.addChild(this.shape);
+	}
+
+	createRidigBody(): void {
+		const rigidBodyDesc = RAPIER()
+			.RigidBodyDesc.dynamic()
+			.setTranslation(this.x, this.y)
+			.lockRotations()
+			.setLinearDamping(0.5);
+		this.rigidBody = this.game.world.createRigidBody(rigidBodyDesc);
+
+		const vertices = new Float32Array(10);
+
+		for (let i = 0; i < 5; i++) {
+			const angle = (i / 5) * Math.PI * 2;
+			vertices[i * 2] = Math.cos(angle) * this.size;
+			vertices[i * 2 + 1] = Math.sin(angle) * this.size;
+		}
+
+		const convexHull = RAPIER().ColliderDesc.convexHull(vertices);
+
+		if (!convexHull) return;
+
+		const colliderDesc = convexHull
+			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
+			.setCollisionGroups(0x00020007);
+
+		this.game.world.createCollider(colliderDesc, this.rigidBody);
+
+		this.rigidBody.userData = this;
+	}
+
+	update(deltaTime: number) {
+		let player = this.game.playerManager?.getClosestPlayer(this.position);
+
+		if (this.destroyed || !player) return;
+
+		// move the player, wasd
+		let dx = player.x - this.x;
+		let dy = player.y - this.y;
+
+		const distance = Math.sqrt(dx * dx + dy * dy);
+
+		// get angle between enemy and player
+		const angle = Math.atan2(dy, dx);
+
+		const rotationSpeed = 0.001;
+		this.rotation += rotationSpeed * deltaTime;
+
+		// move eyes
+		this.leftEye.move(-this.rotation + angle);
+		this.rightEye.move(-this.rotation + angle);
+
+		let alpha = Math.min(1, 1 - distance / 300);
+		this.leftEye.update(deltaTime, alpha);
+		this.rightEye.update(deltaTime, alpha);
+
+		// Only move if not too close to the player and not exploding
+		// lets add some force instead of moving it directly, the further away the player, the more force
+		const force = 1000;
+
+		const x = dx / distance;
+		const y = dy / distance;
+
+		this.rigidBody?.applyImpulse({ x: x * force, y: -y * force }, true);
+
+		this.enemyContainer.position.set(this.x, this.y);
 	}
 }

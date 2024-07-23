@@ -12,6 +12,7 @@ export class Projectile {
 	rigidBody: any;
 	collider: any;
 	destroyed: boolean = false;
+	color: number;
 
 	isProjectile: true;
 
@@ -23,7 +24,8 @@ export class Projectile {
 		size: number,
 		damage: number,
 		color: number,
-		angleOffset: number
+		angleOffset: number,
+		collisionGroups: number = 0x00040002
 	) {
 		this.game = game;
 		const angle =
@@ -33,6 +35,8 @@ export class Projectile {
 		this.vy = Math.sin(angle) * speed;
 		this.damage = damage;
 		this.size = size;
+
+		this.color = color;
 
 		this.shape = new PIXI.Graphics().rect(0, 0, size, size).fill(color);
 
@@ -48,7 +52,7 @@ export class Projectile {
 
 		const colliderDesc = RAPIER()
 			.ColliderDesc.ball(size)
-			.setCollisionGroups(0x00040002)
+			.setCollisionGroups(collisionGroups)
 			.setSensor(true)
 			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS);
 
