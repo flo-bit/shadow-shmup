@@ -78,6 +78,9 @@ export default class Player {
 
 		this.leftEye = new Eye(this.playerContainer, -this.size / 4, 0);
 		this.rightEye = new Eye(this.playerContainer, this.size / 4, 0);
+
+		this.x = 130;
+		this.y = 80;
 	}
 
 	async createLight() {
@@ -159,17 +162,20 @@ export default class Player {
 
 	update(deltaTime: number, keys: Record<string, boolean>) {
 		// move the player, wasd
-		let dx = 0,
-			dy = 0;
-		if (keys['w']) dy -= 1;
-		if (keys['s']) dy += 1;
-		if (keys['a']) dx -= 1;
-		if (keys['d']) dx += 1;
+		if (this.game.playing) {
+			let dx = 0,
+				dy = 0;
+			if (keys['w']) dy -= 1;
+			if (keys['s']) dy += 1;
+			if (keys['a']) dx -= 1;
+			if (keys['d']) dx += 1;
 
-		// Normalize diagonal movement
-		if (dx !== 0 && dy !== 0) {
-			dx *= Math.SQRT1_2;
-			dy *= Math.SQRT1_2;
+			// Normalize diagonal movement
+			if (dx !== 0 && dy !== 0) {
+				dx *= Math.SQRT1_2;
+				dy *= Math.SQRT1_2;
+			}
+			if (dx || dy) this.rigidBody?.applyImpulse({ x: dx * this.speed, y: -dy * this.speed }, true);
 		}
 
 		if (this.light) {
@@ -179,8 +185,6 @@ export default class Player {
 
 		this.leftEye.update(deltaTime, 1);
 		this.rightEye.update(deltaTime, 1);
-
-		if (dx || dy) this.rigidBody?.applyImpulse({ x: dx * this.speed, y: -dy * this.speed }, true);
 
 		// get closest enemy
 		const closestEnemy = this.game.enemyManager?.getClosestEnemy(this.position, 200);
@@ -209,7 +213,7 @@ export default class Player {
 		// ray cast around the player to create a shadow
 		this.shadow.clear();
 
-		const rays = 3600;
+		const rays = 1080;
 
 		const angleStep = (Math.PI * 2) / rays;
 		const rayLength = 1000;

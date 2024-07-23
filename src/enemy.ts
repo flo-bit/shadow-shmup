@@ -230,6 +230,7 @@ export default class Enemy implements PlayerHit {
 	}
 
 	destroy() {
+		if (this.destroyed) return;
 		this.game.spawnParticles(this.x, this.y, 50, this.color);
 
 		this.destroyed = true;
