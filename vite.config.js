@@ -6,5 +6,6 @@ export default defineConfig({
 	plugins: [wasm()],
 	build: {
 		target: 'esnext'
-	}
+	},
+	base: '/shadow-shmup/'
 });
