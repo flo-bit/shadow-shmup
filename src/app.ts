@@ -14,6 +14,8 @@ import { AdvancedBloomFilter } from 'pixi-filters';
 import PlayerManager from './player-manager.js';
 import ProjectileManager, { ProjectileData } from './projectile-manager.js';
 
+import { sound } from '@pixi/sound';
+
 export default class Game {
 	container: PIXI.Container;
 	world!: World;
@@ -42,6 +44,17 @@ export default class Game {
 
 		window.container = this.container;
 		window.game = this;
+
+		sound.add('music-intro', {
+			url: '/shadow-shmup/music-intro.mp3'
+		});
+		sound.play('music-intro', () => {
+			console.log('music-intro complete');
+			sound.play('music');
+		});
+		sound.add('music', { url: '/shadow-shmup/music.mp3', loop: true });
+
+		sound.add('laser', { url: '/shadow-shmup/laser.mp3', volume: 0.3 });
 	}
 
 	async setupPhysicsWorld() {
@@ -108,6 +121,9 @@ export default class Game {
 			}
 			this.particleSystem?.update(deltaTime);
 			this.update(deltaTime);
+
+			if (this.debug) this.renderPhysicsDebug();
+
 			if (this.stats) this.stats.end();
 		});
 
@@ -217,18 +233,15 @@ export default class Game {
 	 * @param {number} deltaTime
 	 */
 	update(deltaTime: number) {
-		if (!this.playing) return;
-
 		// update game state here
 		this.playerManager?.update(deltaTime, this.keys);
+		if (!this.playing) return;
 
 		this.enemyManager?.update(deltaTime);
 
 		if (Math.random() < deltaTime * 0.005) {
 			this.enemyManager?.addEnemy();
 		}
-
-		if (this.debug) this.renderPhysicsDebug();
 
 		// let player = this.playerManager?.players[0];
 		// if (player) {
@@ -240,6 +253,7 @@ export default class Game {
 
 		if (this.playerManager?.players[0].health <= 0) {
 			this.enemyManager?.killAll();
+			this.projectileManager?.clearAllProjectiles();
 
 			this.playing = false;
 

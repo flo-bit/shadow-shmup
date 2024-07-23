@@ -1,6 +1,8 @@
 import Game from './app';
 import { Projectile } from './projectile';
 
+import { sound } from '@pixi/sound';
+
 export type WeaponOptions = {
 	damage?: number;
 	fireRate?: number;
@@ -53,6 +55,8 @@ export class Weapon {
 				collisionGroups: this.collisionGroups
 			});
 			this.cooldown = this.fireRate;
+
+			sound.play('laser');
 		}
 	}
 

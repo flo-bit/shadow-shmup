@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@dimforge/rapier2d": "^0.11.2",
+    "@pixi/sound": "^6.0.0",
     "pixi-filters": "^6.0.4",
     "pixi.js": "^8.2.5",
     "prettier": "^3.3.3",
@@ -21,7 +22,6 @@
   "description": "Vite with rapier and pixi for quick testing.",
   "devDependencies": {
     "@types/node": "^20.14.11",
-    "@types/pixi.js": "^5.0.0",
     "@types/stats.js": "^0.17.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.3",

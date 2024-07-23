@@ -37,7 +37,7 @@ npm run dev
 - [x] die
 - weapons
     - recoil on player
-    - impulse on bullet impact
+    - [x] impulse on bullet impact (done for enemies)
     - different weapons (different shooting mechanics, colors)
     - show weapon
 - [x] change player rigidbody to dynamic
@@ -49,4 +49,17 @@ npm run dev
 - [ ] enemies drop stuff, player can pick it up
 - [ ] music
 - [ ] sound effects
+    - [ ] player shooting
+    - [ ] player getting hit
+    - [ ] enemy getting hit
+    - [ ] enemy shooting
+    - [ ] enemy dying
+- [ ] special effects
+    - [ ] player getting hit (flash screen)
 - [ ] menu: solo, co-op, credits
+
+
+## credits:
+
+- music: [Nicolas Palmer](https://soundcloud.com/nicholas-palmer-4)
+- sound effects: [Kenney](https://kenney.nl/)
