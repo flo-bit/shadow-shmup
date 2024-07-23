@@ -4,7 +4,6 @@ export default class Controls {
 	constructor() {
 		window.addEventListener('keydown', (e) => {
 			this.keys[e.key.toLowerCase()] = true;
-			console.log(this.keys);
 		});
 		window.addEventListener('keyup', (e) => {
 			this.keys[e.key.toLowerCase()] = false;
