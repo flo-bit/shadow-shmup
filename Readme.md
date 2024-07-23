@@ -31,11 +31,10 @@ npm run dev
 
 - count enemies killed
 - enemies attack
-    - shoot
-    - ram
+    - [x] shoot (pentagon)
     - pulse
-    - explode
-- die
+    - [x] ram/explode (triangle)
+- [x] die
 - weapons
     - recoil on player
     - impulse on bullet impact
@@ -43,7 +42,7 @@ npm run dev
     - show weapon
 - [x] change player rigidbody to dynamic
 - different enemies
-    - different shapes, attacks
+    - [x] different shapes, attacks
 - waves
 - [x] eyes blinking
 - [x] obstacles

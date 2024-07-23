@@ -18,17 +18,21 @@ export default class Eye {
 	dx: number = 0;
 	dy: number = 0;
 
-	constructor(container: PIXI.Container, shiftX: number, shiftY: number) {
+	color: number;
+
+	constructor(container: PIXI.Container, shiftX: number, shiftY: number, color = 0xffffff) {
 		this.eyeContainer = new PIXI.Container();
 
 		this.eyeContainer.position.set(shiftX, shiftY);
 
 		container.addChild(this.eyeContainer);
+
+		this.color = color;
 		this.loadLayers();
 	}
 
 	async loadLayers() {
-		const base = new PIXI.Graphics().ellipse(0, 0, 5, 4).fill(0xffffff); //.fill(0xe11d48);
+		const base = new PIXI.Graphics().ellipse(0, 0, 5, 4).fill(this.color); //.fill(0xe11d48);
 		this.base = base;
 		this.base.alpha = 0;
 		this.eyeContainer.addChild(base);

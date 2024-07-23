@@ -72,7 +72,7 @@ export default class Player {
 		this.speed = 30000;
 		this.shape = shape;
 
-		this.weapon = new Weapon(this.game, this.color);
+		this.weapon = new Weapon(this.game, { color: this.color });
 
 		this.isPlayer = true;
 
@@ -116,7 +116,7 @@ export default class Player {
 
 		const colliderDesc = RAPIER()
 			.ColliderDesc.cuboid(this.size / 2, this.size / 2)
-			.setCollisionGroups(0x00010003);
+			.setCollisionGroups(0x00010013);
 		this.game.world.createCollider(colliderDesc, this.rigidBody);
 
 		// Attach this Player instance to the rigid body's user data

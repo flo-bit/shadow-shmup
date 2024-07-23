@@ -1,93 +1,62 @@
 import Game from './app';
 import { Projectile } from './projectile';
 
+export type WeaponOptions = {
+	damage?: number;
+	fireRate?: number;
+	projectileSpeed?: number;
+	projectileSize?: number;
+	color?: number;
+	collisionGroups?: number;
+};
+
 export class Weapon {
 	game: Game;
 
-	cooldown: number;
-	projectiles: Projectile[];
+	cooldown: number = 0;
 
-	damage: number;
-	fireRate: number;
-	projectileSpeed: number;
-	projectileSize: number;
+	damage: number = 20;
+	fireRate: number = 100;
+	projectileSpeed: number = 0.3;
+	projectileSize: number = 5;
 
-	color: number;
+	color: number = 0xffffff;
 
-	collisionGroups: number;
+	collisionGroups: number = 0x00040002;
 
-	constructor(game: Game, color: number, collisionGroups: number = 0x00040002) {
+	constructor(game: Game, options: WeaponOptions | undefined = undefined) {
 		this.game = game;
 
 		this.cooldown = 0;
-		this.projectiles = [];
 
-		this.damage = 20;
-		this.fireRate = 100;
-		this.projectileSpeed = 0.3;
-		this.projectileSize = 5;
+		if (!options) return;
 
-		this.color = color;
+		if (options.damage) this.damage = options.damage;
+		if (options.fireRate) this.fireRate = options.fireRate;
+		if (options.projectileSpeed) this.projectileSpeed = options.projectileSpeed;
+		if (options.projectileSize) this.projectileSize = options.projectileSize;
 
-		this.collisionGroups = collisionGroups;
+		if (options.color) this.color = options.color;
+		if (options.collisionGroups) this.collisionGroups = options.collisionGroups;
 	}
 
 	fire(position: { x: number; y: number }, enemyPosition: { x: number; y: number }) {
 		if (this.cooldown <= 0) {
-			console.log('Firing');
-			this.createProjectile(position, enemyPosition, 0);
+			this.game.addProjectile({
+				position,
+				enemyPosition,
+				angleOffset: 0,
+				speed: this.projectileSpeed,
+				size: this.projectileSize,
+				damage: this.damage,
+				color: this.color,
+				collisionGroups: this.collisionGroups
+			});
 			this.cooldown = this.fireRate;
 		}
 	}
 
-	createProjectile(
-		position: { x: number; y: number },
-		enemyPosition: { x: number; y: number },
-		angleOffset: number
-	) {
-		const projectile = new Projectile(
-			this.game,
-			position,
-			enemyPosition,
-			this.projectileSpeed,
-			this.projectileSize,
-			this.damage,
-			this.color,
-			angleOffset,
-			this.collisionGroups
-		);
-
-		this.projectiles.push(projectile);
-	}
-
 	update(deltaTime: number) {
 		this.cooldown -= deltaTime;
-
-		for (let i = this.projectiles.length - 1; i >= 0; i--) {
-			let projectile = this.projectiles[i];
-			if (projectile.destroyed) {
-				this.projectiles.splice(i, 1);
-				continue;
-			}
-			projectile.update(deltaTime);
-
-			// Check if projectile is too far from 0, 0
-			const dx = projectile.shape.x;
-			const dy = projectile.shape.y;
-			const distanceSquared = dx * dx + dy * dy;
-
-			if (distanceSquared > 100000000) {
-				// 1000 units squared
-				projectile.destroy();
-				this.projectiles.splice(i, 1);
-			}
-		}
-	}
-
-	clearAllProjectiles() {
-		for (let projectile of this.projectiles) {
-			projectile.destroy();
-		}
-		this.projectiles = [];
 	}
 }

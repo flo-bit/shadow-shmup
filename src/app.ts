@@ -12,6 +12,7 @@ import Obstacle from './obstacles.js';
 
 import { AdvancedBloomFilter } from 'pixi-filters';
 import PlayerManager from './player-manager.js';
+import ProjectileManager, { ProjectileData } from './projectile-manager.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -24,11 +25,15 @@ export default class Game {
 	enemyManager?: EnemyManager;
 	playerManager?: PlayerManager;
 
+	projectileManager?: ProjectileManager;
+
 	particleSystem?: ParticleSystem;
 
 	debug: boolean = false;
 
 	stats?: Stats;
+
+	playing: boolean = false;
 
 	constructor() {
 		this.setup();
@@ -109,6 +114,8 @@ export default class Game {
 		this.playerManager = new PlayerManager(this);
 		this.enemyManager = new EnemyManager(this, 10);
 
+		this.projectileManager = new ProjectileManager(this);
+
 		window.addEventListener('keydown', this.handleKeyDown.bind(this));
 		window.addEventListener('keyup', this.handleKeyUp.bind(this));
 
@@ -120,6 +127,26 @@ export default class Game {
 		for (let i = 0; i < 50; i++) {
 			let obstacle = new Obstacle(this);
 		}
+
+		const ui = document.getElementById('ui');
+
+		// get play button (id:play)
+		const playButton = document.getElementById('play');
+		playButton?.addEventListener('click', () => {
+			this.playing = !this.playing;
+
+			// add hidden class to ui
+			ui?.classList.add('hidden');
+
+			let player = this.playerManager?.players[0];
+			if (player) player.health = player.maxHealth;
+		});
+	}
+
+	addProjectile(data: ProjectileData) {
+		if (!this.projectileManager) return;
+
+		this.projectileManager.addProjectile(data);
 	}
 
 	handleCollisionEvents(eventQueue: EventQueue) {
@@ -160,6 +187,13 @@ export default class Game {
 			if (enemy && player && enemy.hitPlayer) {
 				enemy.hitPlayer(player);
 			}
+
+			if (player && projectile) {
+				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, projectile.color);
+
+				player.takeDamage(projectile.damage);
+				projectile.destroy();
+			}
 		});
 	}
 
@@ -183,6 +217,8 @@ export default class Game {
 	 * @param {number} deltaTime
 	 */
 	update(deltaTime: number) {
+		if (!this.playing) return;
+
 		// update game state here
 		this.playerManager?.update(deltaTime, this.keys);
 
@@ -193,6 +229,27 @@ export default class Game {
 		}
 
 		if (this.debug) this.renderPhysicsDebug();
+
+		// let player = this.playerManager?.players[0];
+		// if (player) {
+		// 	player.health += deltaTime * 0.1;
+		// 	player.health = Math.min(player.health, player.maxHealth);
+		// }
+
+		this.projectileManager?.update(deltaTime);
+
+		if (this.playerManager?.players[0].health <= 0) {
+			this.enemyManager?.killAll();
+
+			this.playing = false;
+
+			const ui = document.getElementById('ui');
+			ui?.classList.remove('hidden');
+
+			const title = document.getElementById('title');
+			// set inner text to "Game Over"
+			if (title) title.innerText = 'Game Over';
+		}
 	}
 
 	handleKeyDown(e: KeyboardEvent) {

@@ -50,4 +50,12 @@ export default class EnemyManager {
 			}
 		}
 	}
+
+	killAll() {
+		this.enemies.forEach((enemy) => {
+			enemy.destroy();
+		});
+
+		this.enemies = [];
+	}
 }
