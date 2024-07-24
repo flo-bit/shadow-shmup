@@ -286,24 +286,27 @@ export class SphereEnemy extends Enemy {
 }
 
 export class TriangleEnemy extends Enemy {
-	weapon: Weapon;
-
 	projectile: Projectile;
 
 	constructor(game: Game) {
 		super(game);
 
-		this.speed = 600;
+		this.speed = 3000;
 
-		this.weapon = new Weapon(this.game, {
-			color: this.color,
-			collisionGroups: 0x00100001,
-			projectileSpeed: 0.0,
-			fireRate: 30,
-			projectileSize: 4,
+		let position = { x: this.x, y: this.y };
+
+		this.projectile = new Projectile(this.game, {
+			position,
+			enemyPosition: position,
+			speed: 0.0,
 			damage: 10,
-			lifetime: 30,
-			sound: false
+			size: 2,
+			angleOffset: 0,
+			hit: () => {
+				this.destroy();
+			},
+			collisionGroups: 0x00100001,
+			color: this.color
 		});
 	}
 
@@ -335,7 +338,8 @@ export class TriangleEnemy extends Enemy {
 				new Vector2(0, -this.size)
 			)
 			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
-			.setCollisionGroups(0x00020007);
+			.setCollisionGroups(0x00020007)
+			.setDensity(5);
 
 		this.game.world.createCollider(colliderDesc, this.rigidBody);
 
@@ -372,13 +376,21 @@ export class TriangleEnemy extends Enemy {
 	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {
 		if (this.destroyed) return;
 		if (distance < nearestPlayer.viewDistance) {
-			const x = Math.cos(this.rotation + Math.PI / 2 - 0.0);
-			const y = Math.sin(this.rotation + Math.PI / 2 - 0.0);
-			const startPosition = { x: this.x + x * 20 - 2, y: this.y + y * 20 - 2 };
-			this.weapon.fire(startPosition, startPosition);
+			this.projectile.shape.alpha = 1;
+			const x = Math.cos(this.rotation + Math.PI / 2);
+			const y = Math.sin(this.rotation + Math.PI / 2);
+
+			this.projectile.setPosition(this.x + x * 20 - 1, this.y + y * 20 - 1);
+		} else {
+			this.projectile.shape.alpha = 0;
 		}
 
-		this.weapon.update(deltaTime);
+		// this.weapon.update(deltaTime);
+	}
+
+	destroy(): void {
+		this.projectile.destroy();
+		super.destroy();
 	}
 }
 

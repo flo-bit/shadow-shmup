@@ -21,6 +21,8 @@ export class Projectile {
 
 	showParticles: boolean = true;
 
+	hit?: () => void;
+
 	constructor(
 		game: Game,
 		data: ProjectileData
@@ -71,6 +73,8 @@ export class Projectile {
 
 		this.showParticles = data.showParticles ?? true;
 
+		this.hit = data.hit;
+
 		this.isProjectile = true;
 	}
 
@@ -91,6 +95,17 @@ export class Projectile {
 				if (this.showParticles) this.game.spawnParticles(this.shape.x, this.shape.y, 4, this.color);
 			}
 		}
+	}
+
+	setPosition(x: number, y: number) {
+		this.shape.x = x;
+		this.shape.y = y;
+
+		this.rigidBody.setTranslation({ x, y: -y });
+	}
+
+	onHit() {
+		if (this.hit) this.hit();
 	}
 
 	destroy() {

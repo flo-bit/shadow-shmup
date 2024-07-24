@@ -12,6 +12,7 @@ export type ProjectileData = {
 	lifetime?: number;
 	collisionGroups?: number;
 	showParticles?: boolean;
+	hit?: () => void;
 };
 
 export default class ProjectileManager {

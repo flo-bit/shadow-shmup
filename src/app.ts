@@ -249,6 +249,10 @@ export default class Game {
 				player.takeDamage(projectile.damage);
 				projectile.destroy();
 			}
+
+			if (projectile) {
+				projectile.onHit();
+			}
 		});
 	}
 
