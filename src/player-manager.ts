@@ -40,22 +40,36 @@ export default class PlayerManager {
 		let x = 0,
 			y = 0;
 
+		let count = 0;
+
 		for (let player of this.players) {
+			if (player.dead) continue;
+
 			x += player.x;
 			y += player.y;
+
+			count++;
 		}
 
-		return { x: x / this.players.length, y: y / this.players.length };
+		return { x: x / count, y: y / count };
 	}
 
 	smallestTimeSinceLastDamage() {
 		let min = Infinity;
 
 		for (let player of this.players) {
-			min = Math.min(min, player.timeSinceLastDamage);
+			if (!player.dead) min = Math.min(min, player.timeSinceLastDamage);
 		}
 
 		return min;
+	}
+
+	allDead() {
+		for (let player of this.players) {
+			if (!player.dead) return false;
+		}
+
+		return true;
 	}
 
 	getClosestPlayer(
@@ -69,7 +83,7 @@ export default class PlayerManager {
 		for (let player of this.players) {
 			const dist = (player.x - position.x) ** 2 + (player.y - position.y) ** 2;
 
-			if (dist < closestDist) {
+			if (dist < closestDist && !player.dead) {
 				closestDist = dist;
 				closestPlayer = player;
 			}

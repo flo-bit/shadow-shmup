@@ -50,6 +50,8 @@ export default class Game {
 
 	invincible = false;
 
+	playingTime = 0;
+
 	constructor() {
 		this.setup();
 
@@ -183,6 +185,8 @@ export default class Game {
 			this.playerManager?.resetPlayers(1);
 
 			this.startMusic();
+
+			this.playingTime = 0;
 		});
 
 		const playCoopButton = document.getElementById('play-coop');
@@ -195,6 +199,8 @@ export default class Game {
 			this.playerManager?.resetPlayers(2);
 
 			this.startMusic();
+
+			this.playingTime = 0;
 		});
 	}
 
@@ -280,12 +286,18 @@ export default class Game {
 		this.playerManager?.update(deltaTime, this.keys);
 		if (!this.playing) return;
 
+		this.playingTime += deltaTime;
+		if (Math.floor(this.playingTime / 1000) !== Math.floor((this.playingTime - deltaTime) / 1000)) {
+			let timer = document.getElementById('timer');
+			if (timer) timer.innerText = Math.floor(this.playingTime / 1000).toString();
+		}
+
 		this.obstacleManager.update(deltaTime);
 
 		this.enemyManager?.update(deltaTime);
 
 		if (this.invincible) {
-			this.playerManager!.players[0].health = 100;
+			this.playerManager!.players[1].health = 100;
 		}
 
 		let playerManager = this.playerManager;
@@ -293,7 +305,7 @@ export default class Game {
 		if (playerManager) {
 			let timeSinceLastDamage = playerManager.smallestTimeSinceLastDamage();
 			if (timeSinceLastDamage < 150) {
-				this.container.alpha = playerManager.players[0].timeSinceLastDamage / 300;
+				this.container.alpha = timeSinceLastDamage / 300;
 			} else {
 				this.container.alpha = 1;
 			}
@@ -305,8 +317,7 @@ export default class Game {
 
 		this.projectileManager?.update(deltaTime);
 
-		let player = this.playerManager?.players[0];
-		if (player && player.health <= 0) {
+		if (this.playerManager?.allDead()) {
 			this.enemyManager?.killAll();
 			this.projectileManager?.clearAllProjectiles();
 

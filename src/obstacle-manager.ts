@@ -31,7 +31,6 @@ export class ObstacleManager {
 
 		const currentCell = this.getCellCoord(position.x, position.y);
 
-		console.log(currentCell);
 		if (this.lastActiveCell === currentCell) return;
 
 		this.lastActiveCell = currentCell;

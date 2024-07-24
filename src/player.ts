@@ -49,6 +49,10 @@ export default class Player {
 
 	timeSinceLastDamage: number = 0;
 
+	dead: boolean = false;
+
+	respawnTime: number = 0;
+
 	constructor(game: Game, num: number) {
 		this.game = game;
 		this.num = num;
@@ -169,7 +173,7 @@ export default class Player {
 
 	update(deltaTime: number, keys: Record<string, boolean>) {
 		// move the player, wasd
-		if (this.game.playing) {
+		if (this.game.playing && !this.dead) {
 			let dx = 0,
 				dy = 0;
 			if (this.game.controls.up(this.num)) dy -= 1;
@@ -184,6 +188,30 @@ export default class Player {
 			}
 			if (dx || dy) this.rigidBody?.applyImpulse({ x: dx * this.speed, y: -dy * this.speed }, true);
 		}
+
+		console.log(this.num, this.dead);
+
+		if (this.dead && this.respawnTime > 0) {
+			this.playerContainer.alpha = 0.1;
+			if (this.light) this.light.alpha = 0.0;
+
+			this.respawnTime -= deltaTime;
+			if (this.respawnTime <= 0 && this.game.playing) {
+				// get closest player
+				const closestPlayer = this.game.playerManager?.getClosestPlayer(this.position);
+				this.x = (closestPlayer?.x ?? 0) + 50;
+				this.y = closestPlayer?.y ?? 0;
+
+				this.dead = false;
+				this.health = this.maxHealth;
+
+				this.playerContainer.alpha = 1;
+			}
+
+			return;
+		}
+
+		console.log(this);
 
 		this.timeSinceLastDamage += deltaTime;
 
@@ -211,9 +239,9 @@ export default class Player {
 			this.rightEye.move(angle);
 		}
 
-		this.weapon.update(deltaTime);
-
 		this.drawShadow();
+
+		this.weapon.update(deltaTime);
 
 		this.playerContainer.position.set(this.x, this.y);
 	}
@@ -264,6 +292,8 @@ export default class Player {
 		this.health -= amount;
 		if (this.health < 0) {
 			this.health = 0;
+			this.dead = true;
+			this.respawnTime = 5000;
 		}
 		if (this.healthBar) this.healthBar.width = this.size * (this.health / this.maxHealth);
 
