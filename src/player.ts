@@ -43,8 +43,11 @@ export default class Player {
 	leftEye: Eye;
 	rightEye: Eye;
 
-	constructor(game: Game) {
+	num: number;
+
+	constructor(game: Game, num: number) {
 		this.game = game;
+		this.num = num;
 
 		this.size = 25;
 
@@ -165,10 +168,10 @@ export default class Player {
 		if (this.game.playing) {
 			let dx = 0,
 				dy = 0;
-			if (this.game.controls.up) dy -= 1;
-			if (this.game.controls.down) dy += 1;
-			if (this.game.controls.left) dx -= 1;
-			if (this.game.controls.right) dx += 1;
+			if (this.game.controls.up(this.num)) dy -= 1;
+			if (this.game.controls.down(this.num)) dy += 1;
+			if (this.game.controls.left(this.num)) dx -= 1;
+			if (this.game.controls.right(this.num)) dx += 1;
 
 			// Normalize diagonal movement
 			if (dx !== 0 && dy !== 0) {
@@ -213,10 +216,10 @@ export default class Player {
 		// ray cast around the player to create a shadow
 		this.shadow.clear();
 
-		const rays = 1080;
+		const rays = 1080 / 3;
 
 		const angleStep = (Math.PI * 2) / rays;
-		const rayLength = 1000;
+		const rayLength = 100000;
 
 		let firstPoint;
 
@@ -224,8 +227,8 @@ export default class Player {
 			const angle = i * angleStep;
 
 			const ray = new (RAPIER().Ray)(
-				{ x: this.x, y: -this.y },
-				{ x: Math.cos(angle), y: Math.sin(angle) }
+				new (RAPIER().Vector2)(this.x, -this.y),
+				new (RAPIER().Vector2)(Math.cos(angle), Math.sin(angle))
 			);
 
 			const hit = this.game.world.castRay(ray, rayLength, false, undefined, 0x000a000a);
@@ -257,5 +260,10 @@ export default class Player {
 			this.health = 0;
 		}
 		if (this.healthBar) this.healthBar.width = this.size * (this.health / this.maxHealth);
+	}
+
+	destroy() {
+		if (this.rigidBody) this.game.world.removeRigidBody(this.rigidBody);
+		this.game.container.removeChild(this.playerContainer);
 	}
 }

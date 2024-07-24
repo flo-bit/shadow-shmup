@@ -6,10 +6,10 @@
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="theme-color" content="black"/>
 
-		<link rel="icon" href="/shadow-shmup/icons/favicon.ico" sizes="32x32">
-		<link rel="icon" href="/shadow-shmup/icons/icon.svg" type="image/svg+xml">
-		<link rel="apple-touch-icon" href="/shadow-shmup/icons/apple-touch-icon.png">
-		<link rel="manifest" href="/shadow-shmup/icons/manifest.webmanifest">
+		<link rel="icon" href="/icons/favicon.ico" sizes="32x32">
+		<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+		<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+		<link rel="manifest" href="/icons/manifest.webmanifest">
 
 		<title>shadow shooter</title>
 
@@ -28,9 +28,15 @@
 				<h1 id="title" class="font-bold text-5xl mb-8">shadow shooter</h1>
 				<button
 					id="play"
+					class="text-2xl font-semibold border border-white py-2 px-4 bg-white/10 hover:bg-white/20 mb-4"
+				>
+					solo
+				</button>
+				<button
+					id="play-coop"
 					class="text-2xl font-semibold border border-white py-2 px-4 bg-white/10 hover:bg-white/20"
 				>
-					play
+					co-op
 				</button>
 			</div>
 			<div class="text-white mb-4 flex flex-col items-center gap-4 text-xs">
@@ -61,7 +67,7 @@
 					</a>
 				</div>
 				<div class="flex items-center gap-3">
-					music by <span class="font-semibold">nicolas palmer</span>
+					music by <span class="font-semibold">nicholas palmer</span>
 					<a href="https://discordapp.com/users/702179454818189313/" target="_blank">
 						<svg
 							class="h-4 fill-white hover:fill-cyan-400"
