@@ -16,9 +16,11 @@ import ProjectileManager, { ProjectileData } from './projectile-manager.js';
 
 import { sound } from '@pixi/sound';
 import Controls from './controls.js';
+import { ObstacleManager } from './obstacle-manager.js';
 
 export default class Game {
 	container: PIXI.Container;
+	mainContainer: PIXI.Container;
 	world!: World;
 
 	keys: Record<string, boolean> = {};
@@ -32,7 +34,11 @@ export default class Game {
 
 	particleSystem?: ParticleSystem;
 
+	obstacleManager: ObstacleManager;
+
 	debug: boolean = false;
+
+	showStats: boolean = false;
 
 	stats?: Stats;
 
@@ -40,25 +46,26 @@ export default class Game {
 
 	controls: Controls;
 
+	scale: number = 1;
+
+	invincible = false;
+
+	playingTime = 0;
+
 	constructor() {
 		this.setup();
 
+		this.mainContainer = new PIXI.Container();
 		this.container = new PIXI.Container();
 
-		window.container = this.container;
-		window.game = this;
+		this.controls = new Controls(this);
 
-		this.controls = new Controls();
+		this.obstacleManager = new ObstacleManager(this);
 
 		sound.add('music-intro', {
 			url: '/shadow-shmup/music-intro.mp3'
 		});
-		sound.play('music-intro', () => {
-			console.log('music-intro complete');
-			sound.play('music');
-		});
 		sound.add('music', { url: '/shadow-shmup/music.mp3', loop: true });
-
 		sound.add('laser', { url: '/shadow-shmup/laser.mp3', volume: 0.3 });
 	}
 
@@ -70,7 +77,14 @@ export default class Game {
 
 		window.RAPIER = RAPIER;
 		this.world = world;
-		window.world = world;
+	}
+
+	startMusic() {
+		sound.stopAll();
+
+		sound.play('music-intro', () => {
+			sound.play('music');
+		});
 	}
 
 	async setup() {
@@ -101,16 +115,19 @@ export default class Game {
 		document.body.appendChild(app.canvas);
 
 		// add a container
-		app.stage.addChild(this.container);
+		app.stage.addChild(this.mainContainer);
+		this.mainContainer.addChild(this.container);
 
-		this.container.position.set(window.innerWidth / 2, window.innerHeight / 2);
+		this.mainContainer.position.set(window.innerWidth / 2, window.innerHeight / 2);
 
 		// add a resize event listener
 		window.addEventListener('resize', () => {
 			app.renderer.resize(window.innerWidth, window.innerHeight);
 
-			this.container.position.set(window.innerWidth / 2, window.innerHeight / 2);
+			this.mainContainer.position.set(window.innerWidth / 2, window.innerHeight / 2);
 		});
+
+		this.container.scale.set(this.scale);
 
 		app.ticker.add((ticker) => {
 			if (this.stats) this.stats.begin();
@@ -129,6 +146,16 @@ export default class Game {
 
 			if (this.debug) this.renderPhysicsDebug();
 
+			// move the container so that the player is always in the center
+			let position = this.playerManager?.getCenter();
+			if (position) {
+				position.x = -position.x;
+				position.y = -position.y;
+
+				this.container.x = this.container.x * 0.98 + position.x * 0.02 * this.scale;
+				this.container.y = this.container.y * 0.98 + position.y * 0.02 * this.scale;
+			}
+
 			if (this.stats) this.stats.end();
 		});
 
@@ -140,13 +167,9 @@ export default class Game {
 		window.addEventListener('keydown', this.handleKeyDown.bind(this));
 		window.addEventListener('keyup', this.handleKeyUp.bind(this));
 
-		if (this.debug) {
+		if (this.debug || this.showStats) {
 			this.stats = new Stats();
 			document.body.appendChild(this.stats.dom);
-		}
-
-		for (let i = 0; i < 50; i++) {
-			let obstacle = new Obstacle(this);
 		}
 
 		const ui = document.getElementById('ui');
@@ -159,8 +182,25 @@ export default class Game {
 			// add hidden class to ui
 			ui?.classList.add('hidden');
 
-			let player = this.playerManager?.players[0];
-			if (player) player.health = player.maxHealth;
+			this.playerManager?.resetPlayers(1);
+
+			this.startMusic();
+
+			this.playingTime = 0;
+		});
+
+		const playCoopButton = document.getElementById('play-coop');
+		playCoopButton?.addEventListener('click', () => {
+			this.playing = !this.playing;
+
+			// add hidden class to ui
+			ui?.classList.add('hidden');
+
+			this.playerManager?.resetPlayers(2);
+
+			this.startMusic();
+
+			this.playingTime = 0;
 		});
 	}
 
@@ -215,6 +255,10 @@ export default class Game {
 				player.takeDamage(projectile.damage);
 				projectile.destroy();
 			}
+
+			if (projectile) {
+				projectile.onHit();
+			}
 		});
 	}
 
@@ -242,22 +286,38 @@ export default class Game {
 		this.playerManager?.update(deltaTime, this.keys);
 		if (!this.playing) return;
 
+		this.playingTime += deltaTime;
+		if (Math.floor(this.playingTime / 1000) !== Math.floor((this.playingTime - deltaTime) / 1000)) {
+			let timer = document.getElementById('timer');
+			if (timer) timer.innerText = Math.floor(this.playingTime / 1000).toString();
+		}
+
+		this.obstacleManager.update(deltaTime);
+
 		this.enemyManager?.update(deltaTime);
 
-		if (Math.random() < deltaTime * 0.005) {
+		if (this.invincible) {
+			this.playerManager!.players[1].health = 100;
+		}
+
+		let playerManager = this.playerManager;
+
+		if (playerManager) {
+			let timeSinceLastDamage = playerManager.smallestTimeSinceLastDamage();
+			if (timeSinceLastDamage < 150) {
+				this.container.alpha = timeSinceLastDamage / 300;
+			} else {
+				this.container.alpha = 1;
+			}
+		}
+
+		if (Math.random() < deltaTime * 0.004) {
 			this.enemyManager?.addEnemy();
 		}
 
-		// let player = this.playerManager?.players[0];
-		// if (player) {
-		// 	player.health += deltaTime * 0.1;
-		// 	player.health = Math.min(player.health, player.maxHealth);
-		// }
-
 		this.projectileManager?.update(deltaTime);
 
-		let player = this.playerManager?.players[0];
-		if (player && player.health <= 0) {
+		if (this.playerManager?.allDead()) {
 			this.enemyManager?.killAll();
 			this.projectileManager?.clearAllProjectiles();
 

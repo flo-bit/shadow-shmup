@@ -14,8 +14,8 @@ export default class PlayerManager {
 	}
 
 	addPlayer() {
-		const enemy = new Player(this.game);
-		this.players.push(enemy);
+		const player = new Player(this.game, this.players.length);
+		this.players.push(player);
 	}
 
 	update(deltaTime: number, keys: Record<string, boolean>) {
@@ -24,17 +24,82 @@ export default class PlayerManager {
 		});
 	}
 
+	resetPlayers(num: number = this.players.length) {
+		for (let player of this.players) {
+			player.destroy();
+		}
+
+		this.players = [];
+
+		for (let i = 0; i < num; i++) {
+			this.addPlayer();
+		}
+	}
+
+	getCenter() {
+		let x = 0,
+			y = 0;
+
+		let count = 0;
+
+		for (let player of this.players) {
+			if (player.dead) continue;
+
+			x += player.x;
+			y += player.y;
+
+			count++;
+		}
+
+		return { x: x / count, y: y / count };
+	}
+
+	smallestTimeSinceLastDamage() {
+		let min = Infinity;
+
+		for (let player of this.players) {
+			if (!player.dead) min = Math.min(min, player.timeSinceLastDamage);
+		}
+
+		return min;
+	}
+
+	allDead() {
+		for (let player of this.players) {
+			if (!player.dead) return false;
+		}
+
+		return true;
+	}
+
 	getClosestPlayer(
 		position: { x: number; y: number },
 		maxDist: number | undefined = undefined
 	): Player | undefined {
+		// go through all players and find the closest one
+		let closestPlayer: Player | undefined;
+		let closestDist = Infinity;
+
+		for (let player of this.players) {
+			const dist = (player.x - position.x) ** 2 + (player.y - position.y) ** 2;
+
+			if (dist < closestDist && !player.dead) {
+				closestDist = dist;
+				closestPlayer = player;
+			}
+		}
+
+		if (!maxDist || closestDist < maxDist ** 2) {
+			return closestPlayer;
+		}
+
 		// for now, lets just return player 1
-		return this.players[0];
+		//return this.players[0];
 
 		// let point = { x: position.x, y: -position.y };
 		// let solid = true;
 
-		// let proj = this.game.world.projectPoint(point, solid, undefined, 0x00010001);
+		// let proj = this.game.world.projectPoint(point, false, undefined, 0x00010001);
 
 		// console.log(proj);
 		// if (proj) {

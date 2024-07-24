@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { RAPIER } from './rapier';
 import Game from './app';
+import { ProjectileData } from './projectile-manager';
 
 export class Projectile {
 	game: Game;
@@ -16,32 +17,40 @@ export class Projectile {
 
 	isProjectile: true;
 
+	lifetime: number | undefined = undefined;
+
+	showParticles: boolean = true;
+
+	hit?: () => void;
+
 	constructor(
 		game: Game,
-		position: { x: number; y: number },
-		enemyPosition: { x: number; y: number },
-		speed: number,
-		size: number,
-		damage: number,
-		color: number,
-		angleOffset: number,
-		collisionGroups: number = 0x00040002
+		data: ProjectileData
+		// position: { x: number; y: number },
+		// enemyPosition: { x: number; y: number },
+		// speed: number,
+		// size: number,
+		// damage: number,
+		// color: number,
+		// angleOffset: number,
+		// collisionGroups: number = 0x00040002
 	) {
 		this.game = game;
 		const angle =
-			Math.atan2(enemyPosition.y - position.y, enemyPosition.x - position.x) + angleOffset;
+			Math.atan2(data.enemyPosition.y - data.position.y, data.enemyPosition.x - data.position.x) +
+			data.angleOffset;
 
-		this.vx = Math.cos(angle) * speed;
-		this.vy = Math.sin(angle) * speed;
-		this.damage = damage;
-		this.size = size;
+		this.vx = Math.cos(angle) * data.speed;
+		this.vy = Math.sin(angle) * data.speed;
+		this.damage = data.damage;
+		this.size = data.size ?? 2;
 
-		this.color = color;
+		this.color = data.color ?? 0xffffff;
 
-		this.shape = new PIXI.Graphics().rect(0, 0, size, size).fill(color);
+		this.shape = new PIXI.Graphics().rect(0, 0, this.size, this.size).fill(this.color);
 
-		this.shape.x = position.x;
-		this.shape.y = position.y;
+		this.shape.x = data.position.x;
+		this.shape.y = data.position.y;
 
 		game.container.addChild(this.shape);
 
@@ -51,14 +60,20 @@ export class Projectile {
 		this.rigidBody = game.world.createRigidBody(rigidBodyDesc);
 
 		const colliderDesc = RAPIER()
-			.ColliderDesc.ball(size)
-			.setCollisionGroups(collisionGroups)
+			.ColliderDesc.ball(this.size)
+			.setCollisionGroups(data.collisionGroups ?? 0x00040002)
 			.setSensor(true)
 			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS);
 
 		this.collider = game.world.createCollider(colliderDesc, this.rigidBody);
 
 		this.rigidBody.userData = this;
+
+		this.lifetime = data.lifetime;
+
+		this.showParticles = data.showParticles ?? true;
+
+		this.hit = data.hit;
 
 		this.isProjectile = true;
 	}
@@ -70,9 +85,31 @@ export class Projectile {
 		this.shape.y += this.vy * deltaTime;
 
 		this.rigidBody.setTranslation({ x: this.shape.x, y: -this.shape.y });
+
+		if (this.lifetime !== undefined) {
+			this.lifetime -= deltaTime;
+
+			if (this.lifetime <= 0) {
+				this.destroy();
+
+				if (this.showParticles) this.game.spawnParticles(this.shape.x, this.shape.y, 4, this.color);
+			}
+		}
+	}
+
+	setPosition(x: number, y: number) {
+		this.shape.x = x;
+		this.shape.y = y;
+
+		this.rigidBody.setTranslation({ x, y: -y });
+	}
+
+	onHit() {
+		if (this.hit) this.hit();
 	}
 
 	destroy() {
+		if (this.destroyed) return;
 		this.destroyed = true;
 		this.game.world.removeRigidBody(this.rigidBody);
 		this.game.container.removeChild(this.shape);

@@ -1,5 +1,5 @@
 import Game from './app.js';
-import Enemy, { PentagonEnemy, TriangleEnemy } from './enemy.js';
+import Enemy, { PentagonEnemy, SphereEnemy, TriangleEnemy } from './enemy.js';
 
 export default class EnemyManager {
 	game: Game;
@@ -15,7 +15,7 @@ export default class EnemyManager {
 	}
 
 	addEnemy() {
-		let enemyTypes = [Enemy, TriangleEnemy, PentagonEnemy];
+		let enemyTypes = [SphereEnemy, TriangleEnemy, PentagonEnemy];
 		const randomIndex = Math.floor(Math.random() * enemyTypes.length);
 
 		const enemy = new enemyTypes[randomIndex](this.game);

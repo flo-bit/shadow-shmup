@@ -43,8 +43,19 @@ export default class Player {
 	leftEye: Eye;
 	rightEye: Eye;
 
-	constructor(game: Game) {
+	num: number;
+
+	viewDistance: number = 250;
+
+	timeSinceLastDamage: number = 0;
+
+	dead: boolean = false;
+
+	respawnTime: number = 0;
+
+	constructor(game: Game, num: number) {
 		this.game = game;
+		this.num = num;
 
 		this.size = 25;
 
@@ -88,7 +99,7 @@ export default class Player {
 		this.light = PIXI.Sprite.from(texture);
 		this.light.tint = 0xfda4af;
 		this.light.anchor.set(0.5);
-		this.light.scale.set(0.5);
+		this.light.scale.set((0.5 * this.viewDistance) / 200);
 		this.light.zIndex = -1;
 
 		this.playerContainer.addChild(this.light);
@@ -162,13 +173,13 @@ export default class Player {
 
 	update(deltaTime: number, keys: Record<string, boolean>) {
 		// move the player, wasd
-		if (this.game.playing) {
+		if (this.game.playing && !this.dead) {
 			let dx = 0,
 				dy = 0;
-			if (this.game.controls.up) dy -= 1;
-			if (this.game.controls.down) dy += 1;
-			if (this.game.controls.left) dx -= 1;
-			if (this.game.controls.right) dx += 1;
+			if (this.game.controls.up(this.num)) dy -= 1;
+			if (this.game.controls.down(this.num)) dy += 1;
+			if (this.game.controls.left(this.num)) dx -= 1;
+			if (this.game.controls.right(this.num)) dx += 1;
 
 			// Normalize diagonal movement
 			if (dx !== 0 && dy !== 0) {
@@ -178,8 +189,34 @@ export default class Player {
 			if (dx || dy) this.rigidBody?.applyImpulse({ x: dx * this.speed, y: -dy * this.speed }, true);
 		}
 
+		console.log(this.num, this.dead);
+
+		if (this.dead && this.respawnTime > 0) {
+			this.playerContainer.alpha = 0.1;
+			if (this.light) this.light.alpha = 0.0;
+
+			this.respawnTime -= deltaTime;
+			if (this.respawnTime <= 0 && this.game.playing) {
+				// get closest player
+				const closestPlayer = this.game.playerManager?.getClosestPlayer(this.position);
+				this.x = (closestPlayer?.x ?? 0) + 50;
+				this.y = closestPlayer?.y ?? 0;
+
+				this.dead = false;
+				this.health = this.maxHealth;
+
+				this.playerContainer.alpha = 1;
+			}
+
+			return;
+		}
+
+		console.log(this);
+
+		this.timeSinceLastDamage += deltaTime;
+
 		if (this.light) {
-			this.light.scale = 0.5 + Math.random() * 0.05;
+			this.light.scale = (0.5 + Math.random() * 0.05) * (this.viewDistance / 200);
 			this.light.alpha = 0.2 + Math.random() * 0.01;
 		}
 
@@ -202,9 +239,9 @@ export default class Player {
 			this.rightEye.move(angle);
 		}
 
-		this.weapon.update(deltaTime);
-
 		this.drawShadow();
+
+		this.weapon.update(deltaTime);
 
 		this.playerContainer.position.set(this.x, this.y);
 	}
@@ -213,10 +250,10 @@ export default class Player {
 		// ray cast around the player to create a shadow
 		this.shadow.clear();
 
-		const rays = 1080;
+		const rays = 1080 / 3;
 
 		const angleStep = (Math.PI * 2) / rays;
-		const rayLength = 1000;
+		const rayLength = 100000;
 
 		let firstPoint;
 
@@ -224,8 +261,8 @@ export default class Player {
 			const angle = i * angleStep;
 
 			const ray = new (RAPIER().Ray)(
-				{ x: this.x, y: -this.y },
-				{ x: Math.cos(angle), y: Math.sin(angle) }
+				new (RAPIER().Vector2)(this.x, -this.y),
+				new (RAPIER().Vector2)(Math.cos(angle), Math.sin(angle))
 			);
 
 			const hit = this.game.world.castRay(ray, rayLength, false, undefined, 0x000a000a);
@@ -255,7 +292,16 @@ export default class Player {
 		this.health -= amount;
 		if (this.health < 0) {
 			this.health = 0;
+			this.dead = true;
+			this.respawnTime = 5000;
 		}
 		if (this.healthBar) this.healthBar.width = this.size * (this.health / this.maxHealth);
+
+		this.timeSinceLastDamage = 0;
+	}
+
+	destroy() {
+		if (this.rigidBody) this.game.world.removeRigidBody(this.rigidBody);
+		this.game.container.removeChild(this.playerContainer);
 	}
 }

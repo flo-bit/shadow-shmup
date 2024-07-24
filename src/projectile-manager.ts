@@ -5,11 +5,14 @@ export type ProjectileData = {
 	position: { x: number; y: number };
 	enemyPosition: { x: number; y: number };
 	speed: number;
-	size: number;
 	damage: number;
-	color: number;
 	angleOffset: number;
-	collisionGroups: number;
+	size?: number;
+	color?: number;
+	lifetime?: number;
+	collisionGroups?: number;
+	showParticles?: boolean;
+	hit?: () => void;
 };
 
 export default class ProjectileManager {
@@ -21,17 +24,7 @@ export default class ProjectileManager {
 	}
 
 	addProjectile(data: ProjectileData) {
-		const projectile = new Projectile(
-			this.game,
-			data.position,
-			data.enemyPosition,
-			data.speed,
-			data.size,
-			data.damage,
-			data.color,
-			data.angleOffset,
-			data.collisionGroups
-		);
+		const projectile = new Projectile(this.game, data);
 
 		this.projectiles.push(projectile);
 	}
@@ -45,9 +38,12 @@ export default class ProjectileManager {
 			}
 			projectile.update(deltaTime);
 
+			const center = this.game.playerManager?.getCenter();
+			if (!center) continue;
+
 			// Check if projectile is too far from 0, 0
-			const dx = projectile.shape.x;
-			const dy = projectile.shape.y;
+			const dx = projectile.shape.x - center.x;
+			const dy = projectile.shape.y - center.y;
 			const distanceSquared = dx * dx + dy * dy;
 
 			if (distanceSquared > 1000000) {

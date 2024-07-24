@@ -10,6 +10,12 @@ export type WeaponOptions = {
 	projectileSize?: number;
 	color?: number;
 	collisionGroups?: number;
+
+	lifetime?: number;
+
+	sound?: boolean;
+
+	showParticles?: boolean;
 };
 
 export class Weapon {
@@ -26,6 +32,12 @@ export class Weapon {
 
 	collisionGroups: number = 0x00040002;
 
+	lifetime: number | undefined = undefined;
+
+	sound: boolean = true;
+
+	showParticles: boolean = false;
+
 	constructor(game: Game, options: WeaponOptions | undefined = undefined) {
 		this.game = game;
 
@@ -35,11 +47,16 @@ export class Weapon {
 
 		if (options.damage) this.damage = options.damage;
 		if (options.fireRate) this.fireRate = options.fireRate;
-		if (options.projectileSpeed) this.projectileSpeed = options.projectileSpeed;
+		if (options.projectileSpeed !== undefined) this.projectileSpeed = options.projectileSpeed;
 		if (options.projectileSize) this.projectileSize = options.projectileSize;
 
 		if (options.color) this.color = options.color;
 		if (options.collisionGroups) this.collisionGroups = options.collisionGroups;
+		if (options.lifetime) this.lifetime = options.lifetime;
+
+		if (options.sound !== undefined) this.sound = options.sound;
+
+		if (options.showParticles !== undefined) this.showParticles = options.showParticles;
 	}
 
 	fire(position: { x: number; y: number }, enemyPosition: { x: number; y: number }) {
@@ -52,11 +69,13 @@ export class Weapon {
 				size: this.projectileSize,
 				damage: this.damage,
 				color: this.color,
-				collisionGroups: this.collisionGroups
+				collisionGroups: this.collisionGroups,
+				lifetime: this.lifetime,
+				showParticles: this.showParticles
 			});
 			this.cooldown = this.fireRate;
 
-			sound.play('laser');
+			if (this.sound) sound.play('laser');
 		}
 	}
 

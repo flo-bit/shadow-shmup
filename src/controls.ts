@@ -1,7 +1,13 @@
+import Game from './app';
+
 export default class Controls {
 	keys: Record<string, boolean> = {};
 
-	constructor() {
+	game: Game;
+
+	constructor(game: Game) {
+		this.game = game;
+
 		window.addEventListener('keydown', (e) => {
 			this.keys[e.key.toLowerCase()] = true;
 		});
@@ -52,16 +58,45 @@ export default class Controls {
 		});
 	}
 
-	get left() {
-		return this.keys['a'] || this.keys['arrowleft'];
+	get playerCount() {
+		return this.game.playerManager?.players.length ?? 1;
 	}
-	get right() {
-		return this.keys['d'] || this.keys['arrowright'];
+
+	left(num: number = 0) {
+		let gamepad = navigator.getGamepads()[0];
+		let secondGamepad = navigator.getGamepads()[1];
+
+		if (this.playerCount === 1)
+			return this.keys['a'] || this.keys['arrowleft'] || (gamepad && gamepad.axes[0] < -0.5);
+
+		if (num === 0) return this.keys['a'] || (gamepad && gamepad.axes[0] < -0.5);
+		if (num === 1) return this.keys['arrowleft'] || (secondGamepad && secondGamepad.axes[0] < -0.5);
 	}
-	get up() {
-		return this.keys['w'] || this.keys['arrowup'];
+	right(num: number = 0) {
+		let gamepad = navigator.getGamepads()[0];
+		let secondGamepad = navigator.getGamepads()[1];
+		if (this.playerCount === 1)
+			return this.keys['d'] || this.keys['arrowright'] || (gamepad && gamepad.axes[0] > 0.5);
+
+		if (num === 0) return this.keys['d'] || (gamepad && gamepad.axes[0] > 0.5);
+		if (num === 1) return this.keys['arrowright'] || (secondGamepad && secondGamepad.axes[0] > 0.5);
 	}
-	get down() {
-		return this.keys['s'] || this.keys['arrowdown'];
+	up(num: number = 0) {
+		let gamepad = navigator.getGamepads()[0];
+		let secondGamepad = navigator.getGamepads()[1];
+		if (this.playerCount === 1)
+			return this.keys['w'] || this.keys['arrowup'] || (gamepad && gamepad.axes[1] < -0.5);
+
+		if (num === 0) return this.keys['w'] || (gamepad && gamepad.axes[1] < -0.5);
+		if (num === 1) return this.keys['arrowup'] || (secondGamepad && secondGamepad.axes[1] < -0.5);
+	}
+	down(num: number = 0) {
+		let gamepad = navigator.getGamepads()[0];
+		let secondGamepad = navigator.getGamepads()[1];
+		if (this.playerCount === 1)
+			return this.keys['s'] || this.keys['arrowdown'] || (gamepad && gamepad.axes[1] > 0.5);
+
+		if (num === 0) return this.keys['s'] || (gamepad && gamepad.axes[1] > 0.5);
+		if (num === 1) return this.keys['arrowdown'] || (secondGamepad && secondGamepad.axes[1] > 0.5);
 	}
 }
