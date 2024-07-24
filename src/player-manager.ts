@@ -51,6 +51,8 @@ export default class PlayerManager {
 			count++;
 		}
 
+		if (count === 0) return { x: 0, y: 0 };
+
 		return { x: x / count, y: y / count };
 	}
 

@@ -47,7 +47,7 @@ export default class Player {
 
 	viewDistance: number = 250;
 
-	timeSinceLastDamage: number = 0;
+	timeSinceLastDamage: number = 5000;
 
 	dead: boolean = false;
 
@@ -62,7 +62,7 @@ export default class Player {
 		this.maxHealth = 100;
 		this.health = this.maxHealth;
 
-		this.color = 0xe11d48;
+		this.color = num === 0 ? 0xe11d48 : 0x7c3aed;
 
 		this.playerContainer = new PIXI.Container();
 		game.container.addChild(this.playerContainer);
@@ -90,12 +90,12 @@ export default class Player {
 		this.leftEye = new Eye(this.playerContainer, -this.size / 4, 0);
 		this.rightEye = new Eye(this.playerContainer, this.size / 4, 0);
 
-		this.x = 130;
-		this.y = 80;
+		this.x = 0;
+		this.y = 0;
 	}
 
 	async createLight() {
-		const texture = await PIXI.Assets.load('/shadow-shmup/light.png');
+		const texture = await PIXI.Assets.load('./light.png');
 		this.light = PIXI.Sprite.from(texture);
 		this.light.tint = 0xfda4af;
 		this.light.anchor.set(0.5);
@@ -189,8 +189,6 @@ export default class Player {
 			if (dx || dy) this.rigidBody?.applyImpulse({ x: dx * this.speed, y: -dy * this.speed }, true);
 		}
 
-		console.log(this.num, this.dead);
-
 		if (this.dead && this.respawnTime > 0) {
 			this.playerContainer.alpha = 0.1;
 			if (this.light) this.light.alpha = 0.0;
@@ -210,8 +208,6 @@ export default class Player {
 
 			return;
 		}
-
-		console.log(this);
 
 		this.timeSinceLastDamage += deltaTime;
 

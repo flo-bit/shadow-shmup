@@ -63,10 +63,10 @@ export default class Game {
 		this.obstacleManager = new ObstacleManager(this);
 
 		sound.add('music-intro', {
-			url: '/shadow-shmup/music-intro.mp3'
+			url: './music-intro.mp3'
 		});
-		sound.add('music', { url: '/shadow-shmup/music.mp3', loop: true });
-		sound.add('laser', { url: '/shadow-shmup/laser.mp3', volume: 0.3 });
+		sound.add('music', { url: './music.mp3', loop: true });
+		sound.add('laser', { url: './laser.mp3', volume: 0.3 });
 	}
 
 	async setupPhysicsWorld() {
