@@ -5,6 +5,7 @@ import { Vector2, type RigidBody } from '@dimforge/rapier2d';
 import Eye from './eye';
 import Player from './player';
 import { Weapon } from './weapon';
+import { Projectile } from './projectile';
 
 interface PlayerHit {
 	hitPlayer?(player: Player): void;
@@ -24,7 +25,7 @@ export default class Enemy implements PlayerHit {
 
 	damage: number = 10;
 
-	speed: number = 0.05;
+	speed: number = 500;
 
 	shape?: PIXI.Graphics;
 
@@ -180,53 +181,50 @@ export default class Enemy implements PlayerHit {
 		this.rigidBody?.applyImpulse({ x, y }, true);
 	}
 
+	move(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number) {
+		const x = (dx / distance) * this.speed;
+		const y = (dy / distance) * this.speed;
+
+		this.rigidBody?.applyImpulse({ x: x, y: -y }, true);
+	}
+
+	updateVisuals(
+		deltaTime: number,
+		nearestPlayer: Player,
+		dx: number,
+		dy: number,
+		distance: number
+	) {
+		const angle = Math.atan2(dy, dx);
+
+		this.leftEye?.move(angle);
+		this.rightEye?.move(angle);
+
+		let alpha = Math.min(1, 1 - distance / (nearestPlayer.viewDistance * 1.25));
+		this.leftEye?.update(deltaTime, alpha);
+		this.rightEye?.update(deltaTime, alpha);
+
+		this.enemyContainer.position.set(this.x, this.y);
+	}
+
+	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number) {
+		console.log('attack');
+	}
+
 	update(deltaTime: number) {
 		let player = this.game.playerManager?.getClosestPlayer(this.position);
 
 		if (this.destroyed || !player) return;
 
-		// move the player, wasd
-		let dx = player.x - this.x;
-		let dy = player.y - this.y;
-
+		const dx = player.x - this.x;
+		const dy = player.y - this.y;
 		const distance = Math.sqrt(dx * dx + dy * dy);
 
-		// get angle between enemy and player
-		const angle = Math.atan2(dy, dx);
-		// move eyes
-		this.leftEye?.move(angle);
-		this.rightEye?.move(angle);
+		this.move(deltaTime, player, dx, dy, distance);
 
-		let alpha = Math.min(1, 1 - distance / 300);
+		this.updateVisuals(deltaTime, player, dx, dy, distance);
 
-		this.leftEye?.update(deltaTime, alpha);
-		this.rightEye?.update(deltaTime, alpha);
-
-		// Only move if not too close to the player and not exploding
-		if (distance > this.size + 10 && !this.exploding) {
-			// lets add some force instead of moving it directly, the further away the player, the more force
-			const force = 500;
-
-			const x = dx / distance;
-			const y = dy / distance;
-
-			this.rigidBody?.applyImpulse({ x: x * force, y: -y * force }, true);
-		} else if (!this.exploding) {
-			this.exploding = true;
-			this.destroyTime = 2000;
-		} else {
-			this.destroyTime -= deltaTime;
-			if (this.destroyTime <= 0) {
-				this.destroy();
-
-				if (distance < this.size + 20) {
-					player.takeDamage(20);
-				}
-				return;
-			}
-		}
-
-		this.enemyContainer.position.set(this.x, this.y);
+		this.attack(deltaTime, player, dx, dy, distance);
 	}
 
 	destroy() {
@@ -251,7 +249,64 @@ export default class Enemy implements PlayerHit {
 	}
 }
 
+export class SphereEnemy extends Enemy {
+	weapon: Weapon;
+
+	constructor(game: Game) {
+		super(game);
+
+		this.weapon = new Weapon(this.game, {
+			color: this.color,
+			collisionGroups: 0x00100001,
+			projectileSpeed: 0.3,
+			fireRate: 1000,
+			projectileSize: 4,
+			lifetime: 300,
+			damage: 5,
+			showParticles: true
+		});
+
+		this.speed = 500;
+	}
+
+	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {
+		if (distance < 100 && this.weapon.cooldown < 0) {
+			for (let i = 0; i < 20; i++) {
+				this.weapon.cooldown = -1;
+				// get angle
+				let angle = (Math.PI / 10) * i;
+				let x = Math.cos(angle) + this.position.x;
+				let y = Math.sin(angle) + this.position.y;
+				this.weapon.fire(this.position, { x, y });
+			}
+		}
+
+		this.weapon.update(deltaTime);
+	}
+}
+
 export class TriangleEnemy extends Enemy {
+	weapon: Weapon;
+
+	projectile: Projectile;
+
+	constructor(game: Game) {
+		super(game);
+
+		this.speed = 600;
+
+		this.weapon = new Weapon(this.game, {
+			color: this.color,
+			collisionGroups: 0x00100001,
+			projectileSpeed: 0.0,
+			fireRate: 30,
+			projectileSize: 4,
+			damage: 10,
+			lifetime: 30,
+			sound: false
+		});
+	}
+
 	createEyes() {
 		this.color = 0x38bdf8;
 		super.createEyes();
@@ -287,65 +342,43 @@ export class TriangleEnemy extends Enemy {
 		this.rigidBody.userData = this;
 	}
 
-	update(deltaTime: number) {
-		let player = this.game.playerManager?.getClosestPlayer(this.position);
+	updateVisuals(
+		deltaTime: number,
+		nearestPlayer: Player,
+		dx: number,
+		dy: number,
+		distance: number
+	) {
+		// move eyes
 
-		if (this.destroyed || !player) return;
-
-		// move the player, wasd
-		let dx = player.x - this.x;
-		let dy = player.y - this.y;
-
-		const distance = Math.sqrt(dx * dx + dy * dy);
-
-		// get angle between enemy and player
 		const angle = Math.atan2(dy, dx);
 
-		// apply rotation
-		//let rotationDelta = this.rotation - (angle - Math.PI / 2);
-		//this.rigidBody?.applyTorqueImpulse(rotationDelta * 1000000, true);
-
-		this.rotation = angle - Math.PI / 2;
-
-		// move eyes
 		this.leftEye?.move(Math.PI / 2);
 		this.rightEye?.move(Math.PI / 2);
 
-		let alpha = Math.min(1, 1 - distance / 300);
+		// let rotationDelta = this.rotation - (angle - Math.PI / 2);
+		// this.rigidBody?.applyTorqueImpulse(rotationDelta * 100, true);
+
+		// this.enemyContainer.rotation = angle - Math.PI / 2;
+		this.rotation = angle - Math.PI / 2;
+
+		let alpha = Math.min(1, 1 - distance / (nearestPlayer.viewDistance * 1.25));
 		this.leftEye?.update(deltaTime, alpha);
 		this.rightEye?.update(deltaTime, alpha);
 
-		const force = 600;
-
-		const x = dx / distance;
-		const y = dy / distance;
-
-		this.rigidBody?.applyImpulse({ x: x * force, y: -y * force }, true);
-
 		this.enemyContainer.position.set(this.x, this.y);
-		//this.enemyContainer.rotation = this.rotation;
-
-		if (this.exploding) {
-			this.destroy();
-
-			if (distance < this.size + 20) {
-				player.takeDamage(10);
-			}
-		}
-
-		if (distance < 50) {
-			if (this.destroyTime < 0) this.destroyTime = 1000;
-			else this.destroyTime -= deltaTime;
-
-			if (this.destroyTime < 0) this.exploding = true;
-		} else {
-			this.destroyTime = -1;
-		}
 	}
 
-	hitPlayer(player: Player) {
-		// explode on next update()
-		this.exploding = true;
+	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {
+		if (this.destroyed) return;
+		if (distance < nearestPlayer.viewDistance) {
+			const x = Math.cos(this.rotation + Math.PI / 2 - 0.0);
+			const y = Math.sin(this.rotation + Math.PI / 2 - 0.0);
+			const startPosition = { x: this.x + x * 20 - 2, y: this.y + y * 20 - 2 };
+			this.weapon.fire(startPosition, startPosition);
+		}
+
+		this.weapon.update(deltaTime);
 	}
 }
 
@@ -360,8 +393,11 @@ export class PentagonEnemy extends Enemy {
 			collisionGroups: 0x00100001,
 			projectileSpeed: 0.2,
 			fireRate: 2000,
-			projectileSize: 6
+			projectileSize: 6,
+			damage: 10
 		});
+
+		this.speed = 1000;
 	}
 
 	createEyes() {
@@ -409,18 +445,13 @@ export class PentagonEnemy extends Enemy {
 		this.rigidBody.userData = this;
 	}
 
-	update(deltaTime: number) {
-		let player = this.game.playerManager?.getClosestPlayer(this.position);
-
-		if (this.destroyed || !player) return;
-
-		// move the player, wasd
-		let dx = player.x - this.x;
-		let dy = player.y - this.y;
-
-		const distance = Math.sqrt(dx * dx + dy * dy);
-
-		// get angle between enemy and player
+	updateVisuals(
+		deltaTime: number,
+		nearestPlayer: Player,
+		dx: number,
+		dy: number,
+		distance: number
+	): void {
 		const angle = Math.atan2(dy, dx);
 
 		const rotationSpeed = 0.001;
@@ -430,26 +461,18 @@ export class PentagonEnemy extends Enemy {
 		this.leftEye?.move(-this.rotation + angle);
 		this.rightEye?.move(-this.rotation + angle);
 
-		let alpha = Math.min(1, 1 - distance / 300);
+		let alpha = Math.min(1, 1 - distance / (nearestPlayer.viewDistance * 1.25));
 		this.leftEye?.update(deltaTime, alpha);
 		this.rightEye?.update(deltaTime, alpha);
 
-		// Only move if not too close to the player and not exploding
-		// lets add some force instead of moving it directly, the further away the player, the more force
-		const force = 1000;
+		this.enemyContainer.position.set(this.x, this.y);
+	}
 
-		const x = dx / distance;
-		const y = dy / distance;
-
-		this.rigidBody?.applyImpulse({ x: x * force, y: -y * force }, true);
-
-		// if player is close enough, fire weapon
+	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {
 		if (distance < 400) {
-			this.weapon.fire(this.position, player.position);
+			this.weapon.fire(this.position, nearestPlayer.position);
 		}
 
 		this.weapon.update(deltaTime);
-
-		this.enemyContainer.position.set(this.x, this.y);
 	}
 }

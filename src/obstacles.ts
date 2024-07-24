@@ -5,13 +5,9 @@ import * as PIXI from 'pixi.js';
 
 export default class Obstacle {
 	game: Game;
-
 	size: number = 60;
-
 	container: PIXI.Container;
-
 	collider: Collider;
-
 	graphics: PIXI.Graphics;
 
 	constructor(

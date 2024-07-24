@@ -34,13 +34,21 @@ export default class Game {
 
 	particleSystem?: ParticleSystem;
 
+	obstacleManager: ObstacleManager;
+
 	debug: boolean = false;
+
+	showStats: boolean = false;
 
 	stats?: Stats;
 
 	playing: boolean = false;
 
 	controls: Controls;
+
+	scale: number = 1;
+
+	invincible = false;
 
 	constructor() {
 		this.setup();
@@ -49,6 +57,8 @@ export default class Game {
 		this.container = new PIXI.Container();
 
 		this.controls = new Controls(this);
+
+		this.obstacleManager = new ObstacleManager(this);
 
 		sound.add('music-intro', {
 			url: '/shadow-shmup/music-intro.mp3'
@@ -106,14 +116,16 @@ export default class Game {
 		app.stage.addChild(this.mainContainer);
 		this.mainContainer.addChild(this.container);
 
-		this.container.position.set(window.innerWidth / 2, window.innerHeight / 2);
+		this.mainContainer.position.set(window.innerWidth / 2, window.innerHeight / 2);
 
 		// add a resize event listener
 		window.addEventListener('resize', () => {
 			app.renderer.resize(window.innerWidth, window.innerHeight);
 
-			this.container.position.set(window.innerWidth / 2, window.innerHeight / 2);
+			this.mainContainer.position.set(window.innerWidth / 2, window.innerHeight / 2);
 		});
+
+		this.container.scale.set(this.scale);
 
 		app.ticker.add((ticker) => {
 			if (this.stats) this.stats.begin();
@@ -135,11 +147,11 @@ export default class Game {
 			// move the container so that the player is always in the center
 			let position = this.playerManager?.getCenter();
 			if (position) {
-				position.x = -position.x + window.innerWidth / 2;
-				position.y = -position.y + window.innerHeight / 2;
+				position.x = -position.x;
+				position.y = -position.y;
 
-				this.container.x = this.container.x * 0.98 + position.x * 0.02;
-				this.container.y = this.container.y * 0.98 + position.y * 0.02;
+				this.container.x = this.container.x * 0.98 + position.x * 0.02 * this.scale;
+				this.container.y = this.container.y * 0.98 + position.y * 0.02 * this.scale;
 			}
 
 			if (this.stats) this.stats.end();
@@ -153,12 +165,10 @@ export default class Game {
 		window.addEventListener('keydown', this.handleKeyDown.bind(this));
 		window.addEventListener('keyup', this.handleKeyUp.bind(this));
 
-		if (this.debug) {
+		if (this.debug || this.showStats) {
 			this.stats = new Stats();
 			document.body.appendChild(this.stats.dom);
 		}
-
-		let manager = new ObstacleManager(this);
 
 		const ui = document.getElementById('ui');
 
@@ -266,9 +276,26 @@ export default class Game {
 		this.playerManager?.update(deltaTime, this.keys);
 		if (!this.playing) return;
 
+		this.obstacleManager.update(deltaTime);
+
 		this.enemyManager?.update(deltaTime);
 
-		if (Math.random() < deltaTime * 0.005) {
+		if (this.invincible) {
+			this.playerManager!.players[0].health = 100;
+		}
+
+		let playerManager = this.playerManager;
+
+		if (playerManager) {
+			let timeSinceLastDamage = playerManager.smallestTimeSinceLastDamage();
+			if (timeSinceLastDamage < 150) {
+				this.container.alpha = playerManager.players[0].timeSinceLastDamage / 300;
+			} else {
+				this.container.alpha = 1;
+			}
+		}
+
+		if (Math.random() < deltaTime * 0.004) {
 			this.enemyManager?.addEnemy();
 		}
 

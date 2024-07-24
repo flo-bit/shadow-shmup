@@ -5,11 +5,13 @@ export type ProjectileData = {
 	position: { x: number; y: number };
 	enemyPosition: { x: number; y: number };
 	speed: number;
-	size: number;
 	damage: number;
-	color: number;
 	angleOffset: number;
-	collisionGroups: number;
+	size?: number;
+	color?: number;
+	lifetime?: number;
+	collisionGroups?: number;
+	showParticles?: boolean;
 };
 
 export default class ProjectileManager {
@@ -21,17 +23,7 @@ export default class ProjectileManager {
 	}
 
 	addProjectile(data: ProjectileData) {
-		const projectile = new Projectile(
-			this.game,
-			data.position,
-			data.enemyPosition,
-			data.speed,
-			data.size,
-			data.damage,
-			data.color,
-			data.angleOffset,
-			data.collisionGroups
-		);
+		const projectile = new Projectile(this.game, data);
 
 		this.projectiles.push(projectile);
 	}

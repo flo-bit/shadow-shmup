@@ -45,6 +45,10 @@ export default class Player {
 
 	num: number;
 
+	viewDistance: number = 250;
+
+	timeSinceLastDamage: number = 0;
+
 	constructor(game: Game, num: number) {
 		this.game = game;
 		this.num = num;
@@ -91,7 +95,7 @@ export default class Player {
 		this.light = PIXI.Sprite.from(texture);
 		this.light.tint = 0xfda4af;
 		this.light.anchor.set(0.5);
-		this.light.scale.set(0.5);
+		this.light.scale.set((0.5 * this.viewDistance) / 200);
 		this.light.zIndex = -1;
 
 		this.playerContainer.addChild(this.light);
@@ -181,8 +185,10 @@ export default class Player {
 			if (dx || dy) this.rigidBody?.applyImpulse({ x: dx * this.speed, y: -dy * this.speed }, true);
 		}
 
+		this.timeSinceLastDamage += deltaTime;
+
 		if (this.light) {
-			this.light.scale = 0.5 + Math.random() * 0.05;
+			this.light.scale = (0.5 + Math.random() * 0.05) * (this.viewDistance / 200);
 			this.light.alpha = 0.2 + Math.random() * 0.01;
 		}
 
@@ -260,6 +266,8 @@ export default class Player {
 			this.health = 0;
 		}
 		if (this.healthBar) this.healthBar.width = this.size * (this.health / this.maxHealth);
+
+		this.timeSinceLastDamage = 0;
 	}
 
 	destroy() {

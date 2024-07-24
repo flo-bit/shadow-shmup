@@ -48,6 +48,16 @@ export default class PlayerManager {
 		return { x: x / this.players.length, y: y / this.players.length };
 	}
 
+	smallestTimeSinceLastDamage() {
+		let min = Infinity;
+
+		for (let player of this.players) {
+			min = Math.min(min, player.timeSinceLastDamage);
+		}
+
+		return min;
+	}
+
 	getClosestPlayer(
 		position: { x: number; y: number },
 		maxDist: number | undefined = undefined
