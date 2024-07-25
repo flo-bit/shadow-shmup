@@ -47,7 +47,7 @@ export default class Player {
 
 	viewDistance: number = 250;
 
-	timeSinceLastDamage: number = 0;
+	timeSinceLastDamage: number = 5000;
 
 	dead: boolean = false;
 
@@ -62,7 +62,7 @@ export default class Player {
 		this.maxHealth = 100;
 		this.health = this.maxHealth;
 
-		this.color = 0xe11d48;
+		this.color = num === 0 ? 0xe11d48 : 0x4f46e5;
 
 		this.playerContainer = new PIXI.Container();
 		game.container.addChild(this.playerContainer);
@@ -83,19 +83,19 @@ export default class Player {
 		this.speed = 30000;
 		this.shape = shape;
 
-		this.weapon = new Weapon(this.game, { color: this.color });
+		this.weapon = new Weapon(this.game, { color: this.color, lifetime: 2000 });
 
 		this.isPlayer = true;
 
 		this.leftEye = new Eye(this.playerContainer, -this.size / 4, 0);
 		this.rightEye = new Eye(this.playerContainer, this.size / 4, 0);
 
-		this.x = 130;
-		this.y = 80;
+		this.x = 0;
+		this.y = 0;
 	}
 
 	async createLight() {
-		const texture = await PIXI.Assets.load('/shadow-shmup/light.png');
+		const texture = await PIXI.Assets.load('./light.png');
 		this.light = PIXI.Sprite.from(texture);
 		this.light.tint = 0xfda4af;
 		this.light.anchor.set(0.5);
@@ -186,10 +186,14 @@ export default class Player {
 				dx *= Math.SQRT1_2;
 				dy *= Math.SQRT1_2;
 			}
-			if (dx || dy) this.rigidBody?.applyImpulse({ x: dx * this.speed, y: -dy * this.speed }, true);
-		}
 
-		console.log(this.num, this.dead);
+			let mult = deltaTime * 120 * 0.001;
+			if (dx || dy)
+				this.rigidBody?.applyImpulse(
+					{ x: dx * this.speed * mult, y: -dy * this.speed * mult },
+					true
+				);
+		}
 
 		if (this.dead && this.respawnTime > 0) {
 			this.playerContainer.alpha = 0.1;
@@ -210,8 +214,6 @@ export default class Player {
 
 			return;
 		}
-
-		console.log(this);
 
 		this.timeSinceLastDamage += deltaTime;
 

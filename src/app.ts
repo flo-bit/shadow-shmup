@@ -8,7 +8,6 @@ import { Projectile } from './projectile.js';
 import Enemy from './enemy.js';
 
 import Stats from 'stats.js';
-import Obstacle from './obstacles.js';
 
 import { AdvancedBloomFilter } from 'pixi-filters';
 import PlayerManager from './player-manager.js';
@@ -17,6 +16,7 @@ import ProjectileManager, { ProjectileData } from './projectile-manager.js';
 import { sound } from '@pixi/sound';
 import Controls from './controls.js';
 import { ObstacleManager } from './obstacle-manager.js';
+import { WaveManager } from './wave.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -29,6 +29,7 @@ export default class Game {
 
 	enemyManager?: EnemyManager;
 	playerManager?: PlayerManager;
+	waveManager?: WaveManager;
 
 	projectileManager?: ProjectileManager;
 
@@ -52,6 +53,8 @@ export default class Game {
 
 	playingTime = 0;
 
+	startWave = 0;
+
 	constructor() {
 		this.setup();
 
@@ -63,10 +66,10 @@ export default class Game {
 		this.obstacleManager = new ObstacleManager(this);
 
 		sound.add('music-intro', {
-			url: '/shadow-shmup/music-intro.mp3'
+			url: './music-intro.mp3'
 		});
-		sound.add('music', { url: '/shadow-shmup/music.mp3', loop: true });
-		sound.add('laser', { url: '/shadow-shmup/laser.mp3', volume: 0.3 });
+		sound.add('music', { url: './music.mp3', loop: true });
+		sound.add('laser', { url: './laser.mp3', volume: 0.3 });
 	}
 
 	async setupPhysicsWorld() {
@@ -85,6 +88,18 @@ export default class Game {
 		sound.play('music-intro', () => {
 			sound.play('music');
 		});
+	}
+
+	createStats() {
+		this.stats = new Stats();
+		document.body.appendChild(this.stats.dom);
+	}
+
+	removeStats() {
+		if (this.stats) {
+			document.body.removeChild(this.stats.dom);
+			this.stats = undefined;
+		}
 	}
 
 	async setup() {
@@ -152,15 +167,19 @@ export default class Game {
 				position.x = -position.x;
 				position.y = -position.y;
 
-				this.container.x = this.container.x * 0.98 + position.x * 0.02 * this.scale;
-				this.container.y = this.container.y * 0.98 + position.y * 0.02 * this.scale;
+				const interpolationSpeed = 0.05;
+				const interpolationFactor = 1 - Math.pow(1 - interpolationSpeed, deltaTime / (1000 / 60));
+
+				this.container.x += (position.x * this.scale - this.container.x) * interpolationFactor;
+				this.container.y += (position.y * this.scale - this.container.y) * interpolationFactor;
 			}
 
 			if (this.stats) this.stats.end();
 		});
 
 		this.playerManager = new PlayerManager(this);
-		this.enemyManager = new EnemyManager(this, 10);
+		this.enemyManager = new EnemyManager(this);
+		this.waveManager = new WaveManager(this, this.startWave);
 
 		this.projectileManager = new ProjectileManager(this);
 
@@ -297,7 +316,9 @@ export default class Game {
 		this.enemyManager?.update(deltaTime);
 
 		if (this.invincible) {
-			this.playerManager!.players[1].health = 100;
+			for (let players of this.playerManager?.players ?? []) {
+				players.health = players.maxHealth;
+			}
 		}
 
 		let playerManager = this.playerManager;
@@ -311,8 +332,19 @@ export default class Game {
 			}
 		}
 
-		if (Math.random() < deltaTime * 0.004) {
-			this.enemyManager?.addEnemy();
+		// if (Math.random() < deltaTime * 0.006) {
+		// 	this.enemyManager?.addEnemy();
+		// }
+		this.waveManager?.update(deltaTime);
+
+		const wave = this.waveManager?.getCurrentWave();
+		const waveUI = document.getElementById('wave');
+		const waveText = document.getElementById('wave-text');
+		if (wave && !wave.isActive && waveText && this.playing) {
+			waveUI?.classList.remove('hidden');
+			waveText.innerText = `Wave ${wave.index + 1}`;
+		} else {
+			waveUI?.classList.add('hidden');
 		}
 
 		this.projectileManager?.update(deltaTime);
@@ -329,11 +361,43 @@ export default class Game {
 			const title = document.getElementById('title');
 			// set inner text to "Game Over"
 			if (title) title.innerText = 'Game Over';
+
+			this.waveManager = new WaveManager(this, this.startWave);
+		}
+
+		if (this.debug) {
+			// get debug text
+			let debugText = document.getElementById('debug');
+			if (debugText) {
+				debugText.innerText = `enemies: ${this.enemyManager?.enemies.length ?? 0}`;
+			}
 		}
 	}
 
 	handleKeyDown(e: KeyboardEvent) {
 		this.keys[e.key.toLowerCase()] = true;
+
+		if (e.key.toLowerCase() === 'f') {
+			// full screen
+			const elem = document.documentElement;
+			if (elem.requestFullscreen) {
+				elem.requestFullscreen();
+			}
+		}
+
+		if (e.key.toLowerCase() === 'p') {
+			this.debug = !this.debug;
+			this.debugGraphics?.clear();
+
+			let debugText = document.getElementById('debug');
+			if (this.debug) {
+				if (debugText) debugText.classList.remove('hidden');
+				this.createStats();
+			} else {
+				if (debugText) debugText.classList.add('hidden');
+				if (!this.showStats) this.removeStats();
+			}
+		}
 	}
 
 	handleKeyUp(e: KeyboardEvent) {
