@@ -6,19 +6,19 @@ export default class EnemyManager {
 
 	enemies: Enemy[] = [];
 
-	constructor(game: Game, num: number) {
-		this.game = game;
+	enemyTypes = [SphereEnemy, TriangleEnemy, PentagonEnemy];
 
-		for (let i = 0; i < num; i++) {
-			this.addEnemy();
-		}
+	constructor(game: Game) {
+		this.game = game;
 	}
 
-	addEnemy() {
-		let enemyTypes = [SphereEnemy, TriangleEnemy, PentagonEnemy];
-		const randomIndex = Math.floor(Math.random() * enemyTypes.length);
+	randomEnemyType() {
+		const randomIndex = Math.floor(Math.random() * this.enemyTypes.length);
+		return this.enemyTypes[randomIndex];
+	}
 
-		const enemy = new enemyTypes[randomIndex](this.game);
+	addEnemy(enemyType: typeof Enemy = this.randomEnemyType()) {
+		const enemy = new enemyType(this.game);
 		this.enemies.push(enemy);
 	}
 

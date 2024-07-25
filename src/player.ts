@@ -62,7 +62,7 @@ export default class Player {
 		this.maxHealth = 100;
 		this.health = this.maxHealth;
 
-		this.color = num === 0 ? 0xe11d48 : 0x7c3aed;
+		this.color = num === 0 ? 0xe11d48 : 0x4f46e5;
 
 		this.playerContainer = new PIXI.Container();
 		game.container.addChild(this.playerContainer);
@@ -83,7 +83,7 @@ export default class Player {
 		this.speed = 30000;
 		this.shape = shape;
 
-		this.weapon = new Weapon(this.game, { color: this.color });
+		this.weapon = new Weapon(this.game, { color: this.color, lifetime: 2000 });
 
 		this.isPlayer = true;
 
@@ -186,7 +186,13 @@ export default class Player {
 				dx *= Math.SQRT1_2;
 				dy *= Math.SQRT1_2;
 			}
-			if (dx || dy) this.rigidBody?.applyImpulse({ x: dx * this.speed, y: -dy * this.speed }, true);
+
+			let mult = deltaTime * 120 * 0.001;
+			if (dx || dy)
+				this.rigidBody?.applyImpulse(
+					{ x: dx * this.speed * mult, y: -dy * this.speed * mult },
+					true
+				);
 		}
 
 		if (this.dead && this.respawnTime > 0) {

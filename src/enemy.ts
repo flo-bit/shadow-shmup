@@ -55,19 +55,7 @@ export default class Enemy implements PlayerHit {
 		this.enemyContainer.x = Math.random() * 800 - 400;
 		this.enemyContainer.y = Math.random() * 800 - 400;
 
-		// get player position
-		let position = this.game.playerManager?.getClosestPlayer(this.position)?.position;
-		if (position) {
-			// create random direction vector
-			let point = { x: Math.random() - 0.5, y: Math.random() - 0.5 };
-			let length = 1000;
-			let norm = Math.sqrt(point.x * point.x + point.y * point.y);
-			point.x = (point.x / norm) * length;
-			point.y = (point.y / norm) * length;
-
-			this.enemyContainer.x = position.x + point.x;
-			this.enemyContainer.y = position.y + point.y;
-		}
+		this.setPositionNearPlayer();
 
 		game.container.addChild(this.enemyContainer);
 
@@ -88,6 +76,21 @@ export default class Enemy implements PlayerHit {
 		this.isEnemy = true;
 
 		this.createEyes();
+	}
+
+	setPositionNearPlayer() {
+		let position = this.game.playerManager?.getClosestPlayer(this.position)?.position;
+		if (position) {
+			// create random direction vector
+			let point = { x: Math.random() - 0.5, y: Math.random() - 0.5 };
+			let length = 1000;
+			let norm = Math.sqrt(point.x * point.x + point.y * point.y);
+			point.x = (point.x / norm) * length;
+			point.y = (point.y / norm) * length;
+
+			this.x = position.x + point.x;
+			this.y = position.y + point.y;
+		}
 	}
 
 	createEyes() {
@@ -117,7 +120,7 @@ export default class Enemy implements PlayerHit {
 	createRidigBody() {
 		const rigidBodyDesc = RAPIER()
 			.RigidBodyDesc.dynamic()
-			.setTranslation(this.x, this.y)
+			.setTranslation(this.x, -this.y)
 			.lockRotations()
 			.setLinearDamping(0.5);
 		this.rigidBody = this.game.world.createRigidBody(rigidBodyDesc);
@@ -182,10 +185,17 @@ export default class Enemy implements PlayerHit {
 	}
 
 	move(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number) {
-		const x = (dx / distance) * this.speed;
-		const y = (dy / distance) * this.speed;
+		const mult = deltaTime * 120 * 0.001;
+		const x = (dx / distance) * this.speed * mult;
+		const y = (dy / distance) * this.speed * mult;
 
 		this.rigidBody?.applyImpulse({ x: x, y: -y }, true);
+
+		// if too far away (> 2000), teleport to player
+		if (distance > 2000) {
+			this.setPositionNearPlayer();
+			console.log('teleporting', this.x, this.y);
+		}
 	}
 
 	updateVisuals(
@@ -375,17 +385,17 @@ export class TriangleEnemy extends Enemy {
 
 	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {
 		if (this.destroyed) return;
+
+		const x = Math.cos(this.rotation + Math.PI / 2);
+		const y = Math.sin(this.rotation + Math.PI / 2);
+
+		this.projectile.setPosition(this.x + x * 20 - 1, this.y + y * 20 - 1);
+
 		if (distance < nearestPlayer.viewDistance) {
 			this.projectile.shape.alpha = 1;
-			const x = Math.cos(this.rotation + Math.PI / 2);
-			const y = Math.sin(this.rotation + Math.PI / 2);
-
-			this.projectile.setPosition(this.x + x * 20 - 1, this.y + y * 20 - 1);
 		} else {
 			this.projectile.shape.alpha = 0;
 		}
-
-		// this.weapon.update(deltaTime);
 	}
 
 	destroy(): void {
@@ -406,7 +416,8 @@ export class PentagonEnemy extends Enemy {
 			projectileSpeed: 0.2,
 			fireRate: 2000,
 			projectileSize: 6,
-			damage: 10
+			damage: 10,
+			lifetime: 8000
 		});
 
 		this.speed = 1000;
