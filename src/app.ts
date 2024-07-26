@@ -9,7 +9,7 @@ import Enemy, { CrossEnemy } from './enemy.js';
 
 import Stats from 'stats.js';
 
-import { AdvancedBloomFilter } from 'pixi-filters';
+import { AdvancedBloomFilter, OldFilmFilter } from 'pixi-filters';
 import PlayerManager from './player-manager.js';
 import ProjectileManager, { ProjectileData } from './projectile-manager.js';
 
@@ -20,6 +20,7 @@ import { WaveManager } from './wave.js';
 import { Item, ItemOptions } from './item.js';
 import { ItemManager } from './item-manager.js';
 import { LightManager } from './light-manager.js';
+import { createNoiseSprite } from './helper.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -46,7 +47,7 @@ export default class Game {
 
 	debug: boolean = false;
 
-	showStats: boolean = false;
+	showStats: boolean = true;
 
 	stats?: Stats;
 
@@ -64,8 +65,6 @@ export default class Game {
 
 	minWidth = 700;
 	minHeight = 1000;
-
-	lightPlaced = false;
 
 	constructor() {
 		this.setup();
@@ -160,7 +159,12 @@ export default class Game {
 			this.mainContainer.scale.set(this.scale);
 		});
 
-		//this.container.scale.set(this.scale);
+		let noise = createNoiseSprite(2000, 2000);
+		noise.anchor.set(0.5);
+		noise.scale.set(1);
+		noise.alpha = 0.3;
+		noise.zIndex = 100;
+		this.mainContainer.addChild(noise);
 
 		app.ticker.add((ticker) => {
 			if (this.stats) this.stats.begin();
@@ -334,7 +338,6 @@ export default class Game {
 	update(deltaTime: number) {
 		// update game state here
 		this.playerManager?.update(deltaTime, this.keys);
-		if (!this.playing) return;
 
 		this.playingTime += deltaTime;
 		if (Math.floor(this.playingTime / 1000) !== Math.floor((this.playingTime - deltaTime) / 1000)) {
@@ -344,7 +347,7 @@ export default class Game {
 
 		this.obstacleManager.update(deltaTime);
 
-		this.enemyManager?.update(deltaTime);
+		if (this.playing) this.enemyManager?.update(deltaTime);
 
 		this.itemManager.update(deltaTime);
 
@@ -354,22 +357,6 @@ export default class Game {
 			for (let players of this.playerManager?.players ?? []) {
 				players.health = players.maxHealth;
 			}
-		}
-
-		if (this.keys['e']) {
-			let player = this.playerManager?.players[0];
-			if (player && !this.lightPlaced) {
-				this.lightManager.addLight({
-					color: player.color,
-					x: player.x,
-					y: player.y,
-					alpha: 0.2,
-					scale: 0.5
-				});
-				this.lightPlaced = true;
-			}
-		} else {
-			this.lightPlaced = false;
 		}
 
 		let playerManager = this.playerManager;

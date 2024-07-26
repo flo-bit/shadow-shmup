@@ -33,6 +33,8 @@ export class Item {
 
 	life: number = 0;
 
+	light?: PIXI.Sprite;
+
 	constructor(game: Game, options: ItemOptions) {
 		this.game = game;
 
@@ -43,13 +45,14 @@ export class Item {
 
 		this.lifetime = options.lifetime ?? 10000;
 
-		this.shape = new PIXI.Graphics().rect(0, 0, this.size, this.size).fill(this.color);
+		this.shape = new PIXI.Graphics().circle(0, 0, this.size / 2).fill(this.color);
 
 		this.shape.x = options.x;
 		this.shape.y = options.y;
-		this.shape.pivot.set(this.size / 2, this.size / 2);
 
 		game.container.addChild(this.shape);
+
+		this.addGlow();
 
 		const rigidBodyDesc = RAPIER()
 			.RigidBodyDesc.dynamic()
@@ -67,6 +70,18 @@ export class Item {
 		this.rigidBody.userData = this;
 	}
 
+	async addGlow() {
+		const texture = await PIXI.Assets.load('./light.png');
+		this.light = PIXI.Sprite.from(texture);
+		this.light.tint = this.color;
+		this.light.anchor.set(0.5);
+		this.light.scale.set(0.1);
+		this.light.zIndex = -1;
+		this.light.alpha = 0.2;
+
+		this.shape.addChild(this.light);
+	}
+
 	pickup(player: Player) {
 		this.game.spawnParticles(this.shape.x, this.shape.y, 5, this.color);
 
@@ -82,7 +97,7 @@ export class Item {
 			this.destroy();
 			return;
 		}
-
+		/*
 		let closestPlayer = this.game.lightManager?.getClosestLight({
 			x: this.shape.x,
 			y: this.shape.y
@@ -91,9 +106,9 @@ export class Item {
 		if (closestPlayer) {
 			let dist = Math.hypot(closestPlayer.x - this.shape.x, closestPlayer.y - this.shape.y);
 			this.shape.alpha = 1 - dist / (closestPlayer.scale * 300);
-		}
+		}*/
 
-		this.shape.alpha *= 1 - this.life / this.lifetime;
+		this.shape.scale.set(1 - this.life / this.lifetime + 0.2);
 	}
 
 	destroy() {

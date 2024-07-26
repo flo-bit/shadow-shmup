@@ -64,12 +64,15 @@ export default class Player {
 		this.maxHealth = 100;
 		this.health = this.maxHealth;
 
-		this.color = num === 0 ? 0xe11d48 : 0x4f46e5;
+		this.color = num === 0 ? 0xbe123c : 0x4f46e5;
 
 		this.playerContainer = new PIXI.Container();
 		game.container.addChild(this.playerContainer);
 
-		this.light = this.game.lightManager.addLight({ color: blendColors(this.color, 0xffffff, 0.3) });
+		this.light = this.game.lightManager.addLight({
+			color: blendColors(this.color, 0xffffff, 0.1),
+			detail: 360
+		});
 
 		const shape = new PIXI.Graphics().rect(0, 0, this.size, this.size).fill(this.color);
 		shape.pivot.set(this.size / 2, this.size / 2);
@@ -89,8 +92,8 @@ export default class Player {
 		this.leftEye = new Eye(this.playerContainer, -this.size / 4, 0);
 		this.rightEye = new Eye(this.playerContainer, this.size / 4, 0);
 
-		this.x = 0;
-		this.y = 0;
+		this.x = 280;
+		this.y = 340;
 	}
 
 	createHealthBar() {
@@ -205,7 +208,7 @@ export default class Player {
 
 		if (this.light) {
 			this.light.scale = (0.5 + Math.random() * 0.05) * (this.viewDistance / 200);
-			this.light.alpha = 0.2 + Math.random() * 0.01;
+			this.light.alpha = 0.4;
 		}
 
 		this.leftEye.update(deltaTime, 1);
