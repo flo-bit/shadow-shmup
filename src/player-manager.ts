@@ -89,7 +89,7 @@ export default class PlayerManager {
 		let closestDist = Infinity;
 
 		for (let player of this.players) {
-			const dist = (player.x - position.x) ** 2 + (player.y - position.y) ** 2;
+			const dist = Math.hypot(player.x - position.x, player.y - position.y);
 
 			if (dist < closestDist && !player.dead) {
 				closestDist = dist;
@@ -97,7 +97,7 @@ export default class PlayerManager {
 			}
 		}
 
-		if (!maxDist || closestDist < maxDist ** 2) {
+		if (!maxDist || closestDist < maxDist) {
 			return closestPlayer;
 		}
 

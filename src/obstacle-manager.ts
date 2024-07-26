@@ -3,26 +3,32 @@ import * as PIXI from 'pixi.js';
 import Obstacle from './obstacles';
 
 import Alea from 'alea';
+import { Light } from './light';
 
 const CELL_SIZE = 900;
 const OBSTACLE_COUNT_PER_CELL = 30;
+const LIGHT_COUNT_PER_CELL = 2;
 
 type CellCoord = `${number},${number}`;
 
 export class ObstacleManager {
 	container: PIXI.Container;
-	obstacles: Map<CellCoord, Obstacle[]> = new Map();
+	obstacles: Map<CellCoord, (Obstacle | Light)[]> = new Map();
 	game: Game;
 	currentCells: Set<CellCoord> = new Set();
 	debugGraphics: Map<CellCoord, PIXI.Graphics> = new Map();
 
 	lastActiveCell: CellCoord | null = null;
 
+	seed: string;
+
 	constructor(game: Game) {
 		this.game = game;
 		this.container = new PIXI.Container();
 		this.container.zIndex = 5;
 		this.game.container.addChild(this.container);
+
+		this.seed = Math.random().toFixed(5);
 	}
 
 	update(deltaTime: number) {
@@ -77,10 +83,10 @@ export class ObstacleManager {
 
 	private createCell(cellCoord: CellCoord) {
 		const [cellX, cellY] = cellCoord.split(',').map(Number);
-		const obstacles: Obstacle[] = [];
+		const obstacles: (Obstacle | Light)[] = [];
 
 		// @ts-ignore
-		let rng = new Alea(cellCoord);
+		let rng = new Alea(cellCoord + this.seed);
 
 		for (let i = 0; i < OBSTACLE_COUNT_PER_CELL; i++) {
 			const x = cellX * CELL_SIZE + rng() * CELL_SIZE;
@@ -90,6 +96,19 @@ export class ObstacleManager {
 
 			const obstacle = new Obstacle(this.game, this.container, x, y, width, height);
 			obstacles.push(obstacle);
+		}
+		for (let i = 0; i < LIGHT_COUNT_PER_CELL; i++) {
+			const x = cellX * CELL_SIZE + rng() * CELL_SIZE;
+			const y = cellY * CELL_SIZE + rng() * CELL_SIZE;
+
+			const light = this.game.lightManager.addLight({
+				x,
+				y,
+				color: 0xffffff * rng(),
+				alpha: 0.05 + rng() * 0.15,
+				scale: 0.5 + rng() * 1
+			});
+			obstacles.push(light);
 		}
 
 		this.obstacles.set(cellCoord, obstacles);

@@ -83,16 +83,14 @@ export class Item {
 			return;
 		}
 
-		let closestPlayer = this.game.playerManager?.getClosestPlayer({
+		let closestPlayer = this.game.lightManager?.getClosestLight({
 			x: this.shape.x,
 			y: this.shape.y
 		});
 
 		if (closestPlayer) {
-			let dist = Math.sqrt(
-				(closestPlayer.x - this.shape.x) ** 2 + (closestPlayer.y - this.shape.y) ** 2
-			);
-			this.shape.alpha = 1 - dist / closestPlayer.viewDistance;
+			let dist = Math.hypot(closestPlayer.x - this.shape.x, closestPlayer.y - this.shape.y);
+			this.shape.alpha = 1 - dist / (closestPlayer.scale * 300);
 		}
 
 		this.shape.alpha *= 1 - this.life / this.lifetime;

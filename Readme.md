@@ -69,6 +69,7 @@ npm run dev
     - player health
     - viewing distance
     - shooting distance
+    - player size
     - bullet count?
     - bullet spread?
 - lights
@@ -95,6 +96,7 @@ npm run dev
     - bullet speed
     - bullet count
     - fire rate
+- [ ] indicator for sphere enemy shooting (+pause before shooting)
 
 
 ## credits:

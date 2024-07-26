@@ -6,6 +6,7 @@ import Eye from './eye';
 import Player from './player';
 import { Weapon } from './weapon';
 import { Projectile } from './projectile';
+import { Light } from './light';
 
 interface PlayerHit {
 	hitPlayer?(player: Player): void;
@@ -203,6 +204,7 @@ export default class Enemy implements PlayerHit {
 	updateVisuals(
 		deltaTime: number,
 		nearestPlayer: Player,
+		nearestLight: Light | undefined,
 		dx: number,
 		dy: number,
 		distance: number
@@ -212,9 +214,16 @@ export default class Enemy implements PlayerHit {
 		this.leftEye?.move(angle);
 		this.rightEye?.move(angle);
 
-		let alpha = Math.min(1, 1 - distance / (nearestPlayer.viewDistance * 1.25));
-		this.leftEye?.update(deltaTime, alpha);
-		this.rightEye?.update(deltaTime, alpha);
+		if (nearestLight) {
+			const light_distance = Math.hypot(nearestLight.x - this.x, nearestLight.y - this.y);
+
+			let alpha = Math.min(1, 1 - light_distance / (nearestLight.scale * 350));
+			this.leftEye?.update(deltaTime, alpha);
+			this.rightEye?.update(deltaTime, alpha);
+		} else {
+			this.leftEye?.update(deltaTime, 0);
+			this.rightEye?.update(deltaTime, 0);
+		}
 
 		this.enemyContainer.position.set(this.x, this.y);
 	}
@@ -225,6 +234,7 @@ export default class Enemy implements PlayerHit {
 
 	update(deltaTime: number) {
 		let player = this.game.playerManager?.getClosestPlayer(this.position);
+		let light = this.game.lightManager?.getClosestLight(this.position);
 
 		if (this.destroyed || !player) return;
 
@@ -234,7 +244,7 @@ export default class Enemy implements PlayerHit {
 
 		this.move(deltaTime, player, dx, dy, distance);
 
-		this.updateVisuals(deltaTime, player, dx, dy, distance);
+		this.updateVisuals(deltaTime, player, light, dx, dy, distance);
 
 		this.attack(deltaTime, player, dx, dy, distance);
 	}
@@ -367,6 +377,7 @@ export class TriangleEnemy extends Enemy {
 	updateVisuals(
 		deltaTime: number,
 		nearestPlayer: Player,
+		nearestLight: Light | undefined,
 		dx: number,
 		dy: number,
 		distance: number
@@ -378,15 +389,18 @@ export class TriangleEnemy extends Enemy {
 		this.leftEye?.move(Math.PI / 2);
 		this.rightEye?.move(Math.PI / 2);
 
-		// let rotationDelta = this.rotation - (angle - Math.PI / 2);
-		// this.rigidBody?.applyTorqueImpulse(rotationDelta * 100, true);
+		if (nearestLight) {
+			const light_distance = Math.hypot(nearestLight.x - this.x, nearestLight.y - this.y);
 
-		// this.enemyContainer.rotation = angle - Math.PI / 2;
+			let alpha = Math.min(1, 1 - light_distance / (nearestLight.scale * 350));
+			this.leftEye?.update(deltaTime, alpha);
+			this.rightEye?.update(deltaTime, alpha);
+		} else {
+			this.leftEye?.update(deltaTime, 0);
+			this.rightEye?.update(deltaTime, 0);
+		}
+
 		this.rotation = angle - Math.PI / 2;
-
-		let alpha = Math.min(1, 1 - distance / (nearestPlayer.viewDistance * 1.25));
-		this.leftEye?.update(deltaTime, alpha);
-		this.rightEye?.update(deltaTime, alpha);
 
 		this.enemyContainer.position.set(this.x, this.y);
 	}
@@ -481,6 +495,7 @@ export class PentagonEnemy extends Enemy {
 	updateVisuals(
 		deltaTime: number,
 		nearestPlayer: Player,
+		nearestLight: Light | undefined,
 		dx: number,
 		dy: number,
 		distance: number
@@ -494,9 +509,16 @@ export class PentagonEnemy extends Enemy {
 		this.leftEye?.move(-this.rotation + angle);
 		this.rightEye?.move(-this.rotation + angle);
 
-		let alpha = Math.min(1, 1 - distance / (nearestPlayer.viewDistance * 1.25));
-		this.leftEye?.update(deltaTime, alpha);
-		this.rightEye?.update(deltaTime, alpha);
+		if (nearestLight) {
+			const light_distance = Math.hypot(nearestLight.x - this.x, nearestLight.y - this.y);
+
+			let alpha = Math.min(1, 1 - light_distance / (nearestLight.scale * 350));
+			this.leftEye?.update(deltaTime, alpha);
+			this.rightEye?.update(deltaTime, alpha);
+		} else {
+			this.leftEye?.update(deltaTime, 0);
+			this.rightEye?.update(deltaTime, 0);
+		}
 
 		this.enemyContainer.position.set(this.x, this.y);
 	}
@@ -628,6 +650,7 @@ export class CrossEnemy extends Enemy {
 	updateVisuals(
 		deltaTime: number,
 		nearestPlayer: Player,
+		nearestLight: Light | undefined,
 		dx: number,
 		dy: number,
 		distance: number
@@ -641,9 +664,16 @@ export class CrossEnemy extends Enemy {
 		this.leftEye?.move(-this.rotation + angle);
 		this.rightEye?.move(-this.rotation + angle);
 
-		let alpha = Math.min(1, 1 - distance / (nearestPlayer.viewDistance * 5));
-		this.leftEye?.update(deltaTime, alpha);
-		this.rightEye?.update(deltaTime, alpha);
+		if (nearestLight) {
+			const light_distance = Math.hypot(nearestLight.x - this.x, nearestLight.y - this.y);
+
+			let alpha = Math.min(1, 1 - light_distance / (nearestLight.scale * 350));
+			this.leftEye?.update(deltaTime, alpha);
+			this.rightEye?.update(deltaTime, alpha);
+		} else {
+			this.leftEye?.update(deltaTime, 0);
+			this.rightEye?.update(deltaTime, 0);
+		}
 
 		this.enemyContainer.position.set(this.x, this.y);
 	}

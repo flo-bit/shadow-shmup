@@ -19,6 +19,7 @@ import { ObstacleManager } from './obstacle-manager.js';
 import { WaveManager } from './wave.js';
 import { Item, ItemOptions } from './item.js';
 import { ItemManager } from './item-manager.js';
+import { LightManager } from './light-manager.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -34,6 +35,8 @@ export default class Game {
 	waveManager?: WaveManager;
 
 	itemManager: ItemManager;
+
+	lightManager: LightManager;
 
 	projectileManager?: ProjectileManager;
 
@@ -62,6 +65,8 @@ export default class Game {
 	minWidth = 700;
 	minHeight = 1000;
 
+	lightPlaced = false;
+
 	constructor() {
 		this.setup();
 
@@ -71,6 +76,7 @@ export default class Game {
 		this.controls = new Controls(this);
 		this.obstacleManager = new ObstacleManager(this);
 		this.itemManager = new ItemManager(this);
+		this.lightManager = new LightManager(this);
 
 		sound.add('music-intro', {
 			url: './music-intro.mp3'
@@ -342,10 +348,28 @@ export default class Game {
 
 		this.itemManager.update(deltaTime);
 
+		this.lightManager.update(deltaTime);
+
 		if (this.invincible) {
 			for (let players of this.playerManager?.players ?? []) {
 				players.health = players.maxHealth;
 			}
+		}
+
+		if (this.keys['e']) {
+			let player = this.playerManager?.players[0];
+			if (player && !this.lightPlaced) {
+				this.lightManager.addLight({
+					color: player.color,
+					x: player.x,
+					y: player.y,
+					alpha: 0.2,
+					scale: 0.5
+				});
+				this.lightPlaced = true;
+			}
+		} else {
+			this.lightPlaced = false;
 		}
 
 		let playerManager = this.playerManager;
