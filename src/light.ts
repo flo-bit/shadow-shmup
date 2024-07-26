@@ -1,6 +1,8 @@
 import * as PIXI from 'pixi.js';
 import { RAPIER } from './rapier';
 import Game from './app';
+import { RigidBody } from '@dimforge/rapier2d';
+// import 'pixi.js/advanced-blend-modes';
 
 export type LightOptions = {
 	x?: number;
@@ -11,6 +13,10 @@ export type LightOptions = {
 	lifetime?: number;
 
 	alpha?: number;
+
+	detail?: number;
+
+	flicker?: boolean;
 };
 
 export class Light {
@@ -34,6 +40,10 @@ export class Light {
 
 	flicker: boolean = true;
 
+	rigidBody?: RigidBody;
+
+	detail: number = 120;
+
 	constructor(game: Game, options: LightOptions) {
 		this.game = game;
 
@@ -52,6 +62,8 @@ export class Light {
 			this.lifetime = options.lifetime;
 		}
 		if (options.alpha) this.alpha = options.alpha;
+		if (options.detail) this.detail = options.detail;
+		if (options.flicker !== undefined) this.flicker = options.flicker;
 
 		this.createLight();
 
@@ -63,6 +75,8 @@ export class Light {
 	}
 	set x(value) {
 		this.lightContainer.x = value;
+
+		this.rigidBody?.setTranslation({ x: value, y: -this.y }, true);
 	}
 
 	get y() {
@@ -70,6 +84,8 @@ export class Light {
 	}
 	set y(value) {
 		this.lightContainer.y = value;
+
+		this.rigidBody?.setTranslation({ x: this.x, y: -value }, true);
 	}
 
 	get scale() {
@@ -107,14 +123,27 @@ export class Light {
 
 		this.lightContainer.addChild(this.light);
 
+		// this.lightContainer.blendMode = 'add';
+
 		this.light.mask = this.shadow;
+
+		const rigidBodyDesc = RAPIER()
+			.RigidBodyDesc.kinematicPositionBased()
+			.setTranslation(this.x, -this.y)
+			.lockRotations();
+		this.rigidBody = this.game.world.createRigidBody(rigidBodyDesc);
+
+		const colliderDesc = RAPIER().ColliderDesc.cuboid(10, 10).setCollisionGroups(0x10001000);
+		this.game.world.createCollider(colliderDesc, this.rigidBody);
+
+		this.rigidBody.userData = this;
 	}
 
 	drawShadow() {
 		// ray cast around the player to create a shadow
 		this.shadow.clear();
 
-		const rays = 360;
+		const rays = this.detail;
 
 		const angleStep = (Math.PI * 2) / rays;
 		const rayLength = 100000;
@@ -158,8 +187,12 @@ export class Light {
 		this.drawShadow();
 
 		if (this.flicker && this.light) {
-			this.light.alpha = this._alpha + Math.random() * 0.01;
-			this.light.scale.set(this._scale + Math.random() * 0.05);
+			this.light.alpha = this._alpha + (Math.random() - 0.5) * 0.03;
+			this.light.scale.set(this._scale + Math.random() * 0.1);
+
+			if (Math.random() < 1 / deltaTime) {
+				this.light.alpha = this._alpha * 0.5;
+			}
 		}
 	}
 
@@ -168,5 +201,6 @@ export class Light {
 
 		this.destroyed = true;
 		this.lightContainer.destroy();
+		if (this.rigidBody) this.game.world.removeRigidBody(this.rigidBody);
 	}
 }

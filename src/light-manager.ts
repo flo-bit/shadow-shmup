@@ -27,23 +27,34 @@ export class LightManager {
 		position: { x: number; y: number },
 		maxDist: number | undefined = undefined
 	): Light | undefined {
-		let closestLight: Light | undefined;
-		let closestDistance = Infinity;
+		position.y = -position.y;
+		let solid = true;
 
-		for (let light of this.lights) {
-			if (light.destroyed) continue;
-			console.log(light);
-			const distance = Math.hypot(light.x - position.x, light.y - position.y);
-			if (distance < closestDistance) {
-				closestDistance = distance;
-				closestLight = light;
-			}
+		let proj = this.game.world.projectPoint(position, solid, undefined, 0x10001000);
+
+		if (proj) {
+			let light = proj.collider.parent()?.userData as Light;
+
+			return light;
 		}
 
-		if (!maxDist || closestDistance < maxDist) {
-			return closestLight;
-		}
+		// let closestLight: Light | undefined;
+		// let closestDistance = Infinity;
 
-		return undefined;
+		// for (let light of this.lights) {
+		// 	if (light.destroyed) continue;
+		// 	console.log(light);
+		// 	const distance = Math.hypot(light.x - position.x, light.y - position.y);
+		// 	if (distance < closestDistance) {
+		// 		closestDistance = distance;
+		// 		closestLight = light;
+		// 	}
+		// }
+
+		// if (!maxDist || closestDistance < maxDist) {
+		// 	return closestLight;
+		// }
+
+		// return undefined;
 	}
 }
