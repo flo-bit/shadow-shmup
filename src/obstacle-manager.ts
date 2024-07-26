@@ -195,10 +195,12 @@ export class ObstacleManager {
 				const x = cellX * CELL_SIZE + rng() * CELL_SIZE;
 				const y = cellY * CELL_SIZE + rng() * CELL_SIZE;
 
+				const color = titleColors[Math.floor(rng() * titleColors.length)];
+
 				const light = this.game.lightManager.addLight({
 					x,
 					y,
-					color: 0xffffff * rng(),
+					color: color, //0xffffff * rng(),
 					alpha: 0.05 + rng() * 0.15,
 					scale: 0.5 + rng() * 1
 				});
