@@ -72,6 +72,7 @@ npm run dev
     - player size
     - bullet count?
     - bullet spread?
+    - items stay longer
 - lights
     - make own light class and add to player
     - enemies should be lit by light distance instead of player distance
@@ -87,6 +88,9 @@ npm run dev
         - [ ] 2x shooting distance
         - [ ] shoot through enemies
         - [ ] 50%, 100% health refill
+        - [ ] items stay as long as powerup is active
+        - [ ] item magnet
+        - [ ] get all items
 - [x] scale canvas so that it always shows a 1000x1000 area or something like that
 - [ ] enemy upgrades (some enemies are upgraded every wave)
     - damage

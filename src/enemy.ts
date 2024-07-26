@@ -319,7 +319,7 @@ export class TriangleEnemy extends Enemy {
 		super(game);
 
 		this.type = 2;
-		this.speed = 3000;
+		this.speed = 2000;
 
 		let position = { x: this.x, y: this.y };
 
@@ -356,7 +356,7 @@ export class TriangleEnemy extends Enemy {
 			.RigidBodyDesc.dynamic()
 			.setTranslation(this.x, this.y)
 			.lockRotations()
-			.setLinearDamping(0.3);
+			.setLinearDamping(1);
 		this.rigidBody = this.game.world.createRigidBody(rigidBodyDesc);
 
 		const colliderDesc = RAPIER()
@@ -367,7 +367,7 @@ export class TriangleEnemy extends Enemy {
 			)
 			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
 			.setCollisionGroups(0x00020007)
-			.setDensity(5);
+			.setDensity(1);
 
 		this.game.world.createCollider(colliderDesc, this.rigidBody);
 
