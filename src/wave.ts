@@ -6,7 +6,7 @@ each enemy has a type, and a number of enemies of that type that will spawn
 */
 
 import Game from './app';
-import Enemy, { PentagonEnemy, SphereEnemy, TriangleEnemy } from './enemy';
+import Enemy, { CrossEnemy, PentagonEnemy, SphereEnemy, TriangleEnemy } from './enemy';
 
 export class Wave {
 	game: Game;
@@ -95,6 +95,7 @@ type WaveData = {
 };
 
 export const defaultWaves: WaveData[] = [
+	//{ enemies: [{ type: CrossEnemy, num: 1 }], spawnSpeed: 1 },
 	{ enemies: [{ type: TriangleEnemy, num: 5 }], spawnSpeed: 3 },
 	{
 		enemies: [

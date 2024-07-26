@@ -29,7 +29,7 @@ npm run dev
 
 # shadow shmup
 
-- count enemies killed
+- count kills, deaths, damage taken, damage dealt
 - enemies attack
     - [x] shoot (pentagon)
     - pulse
@@ -46,8 +46,8 @@ npm run dev
 - waves
 - [x] eyes blinking
 - [x] obstacles
-- [ ] enemies drop stuff, player can pick it up
-- [ ] music
+- [x] enemies drop stuff, player can pick it up
+- [x] music
 - [ ] sound effects
     - [ ] player shooting
     - [ ] player getting hit
@@ -55,11 +55,49 @@ npm run dev
     - [ ] enemy shooting
     - [ ] enemy dying
 - [ ] special effects
-    - [ ] player getting hit (flash screen)
-- [ ] menu: solo, co-op, credits
+    - [x] player getting hit (flash screen)
+- [x] menu: solo, co-op, credits
+- [x] credits
+- [x] items ("potions")
+    - [x] disappear after a while
+    - [x] different potions (depending on monster killed?)
+- [ ] player upgrades (all upgrades use potions, and have one positive and one negative effect)
+    - movement speed
+    - fire rate
+    - bullet speed
+    - bullet damage
+    - player health
+    - viewing distance
+    - shooting distance
+    - bullet count?
+    - bullet spread?
+- lights
+    - make own light class and add to player
+    - enemies should be lit by light distance instead of player distance
+- [ ] powerups
+    - [ ] randomly spawn
+    - [ ] disappear after a while
+    - [ ] can be used for a limited time
+    - [ ] different powerups:
+        - [ ] invincibility
+        - [ ] 2x, 4x damage
+        - [ ] 2x, 4x fire rate
+        - [ ] 2x, 4x bullet count
+        - [ ] 2x shooting distance
+        - [ ] shoot through enemies
+        - [ ] 50%, 100% health refill
+- [x] scale canvas so that it always shows a 1000x1000 area or something like that
+- [ ] enemy upgrades (some enemies are upgraded every wave)
+    - damage
+    - speed
+    - health
+    - shooting range
+    - bullet speed
+    - bullet count
+    - fire rate
 
 
 ## credits:
 
-- music: [Nicolas Palmer](https://soundcloud.com/nicholas-palmer-4)
+- music: [Nicholas Palmer](https://soundcloud.com/nicholas-palmer-4)
 - sound effects: [Kenney](https://kenney.nl/)

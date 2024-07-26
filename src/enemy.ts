@@ -45,6 +45,8 @@ export default class Enemy implements PlayerHit {
 
 	color: number = 0xfb923c;
 
+	type: number = 0;
+
 	hitPlayer?(player: Player): void;
 
 	constructor(game: Game) {
@@ -239,6 +241,9 @@ export default class Enemy implements PlayerHit {
 
 	destroy() {
 		if (this.destroyed) return;
+
+		this.game.dropItem({ x: this.x, y: this.y, color: this.color, size: 10, type: this.type });
+
 		this.game.spawnParticles(this.x, this.y, 50, this.color);
 
 		this.destroyed = true;
@@ -264,6 +269,8 @@ export class SphereEnemy extends Enemy {
 
 	constructor(game: Game) {
 		super(game);
+
+		this.type = 1;
 
 		this.weapon = new Weapon(this.game, {
 			color: this.color,
@@ -301,6 +308,7 @@ export class TriangleEnemy extends Enemy {
 	constructor(game: Game) {
 		super(game);
 
+		this.type = 2;
 		this.speed = 3000;
 
 		let position = { x: this.x, y: this.y };
@@ -410,6 +418,8 @@ export class PentagonEnemy extends Enemy {
 	constructor(game: Game) {
 		super(game);
 
+		this.type = 3;
+
 		this.weapon = new Weapon(this.game, {
 			color: this.color,
 			collisionGroups: 0x00100001,
@@ -494,6 +504,158 @@ export class PentagonEnemy extends Enemy {
 	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {
 		if (distance < 400) {
 			this.weapon.fire(this.position, nearestPlayer.position);
+		}
+
+		this.weapon.update(deltaTime);
+	}
+}
+
+export class CrossEnemy extends Enemy {
+	weapon: Weapon;
+
+	shootAngle: number = 0;
+
+	constructor(game: Game) {
+		super(game);
+
+		this.type = 4;
+
+		this.weapon = new Weapon(this.game, {
+			color: this.color,
+			collisionGroups: 0x00100001,
+			projectileSpeed: 0.2,
+			fireRate: 100,
+			projectileSize: 6,
+			damage: 10,
+			lifetime: 8000
+		});
+
+		this.speed = 20000;
+		this.health = 10000;
+	}
+
+	createEyes() {
+		this.size = 500;
+		this.color = 0x0284c7;
+		this.eyes = new PIXI.Container();
+		this.enemyContainer.addChild(this.eyes);
+		this.eyes.scale.set(5);
+
+		this.leftEye = new Eye(this.eyes, -10, 0, this.color);
+		this.rightEye = new Eye(this.eyes, 10, 0, this.color);
+	}
+
+	createShape(): void {
+		this.size = 600;
+		this.shape = new PIXI.Graphics().rect(0, 0, this.size, this.size / 8).fill(0);
+		this.shape.pivot.set(this.size / 2, this.size / 16);
+		let shape2 = new PIXI.Graphics().rect(0, 0, this.size / 8, this.size).fill(0);
+		shape2.pivot.set(this.size / 16, this.size / 2);
+		this.enemyContainer.addChild(this.shape);
+		this.enemyContainer.addChild(shape2);
+	}
+
+	createRidigBody(): void {
+		this.size = 600;
+		const rigidBodyDesc = RAPIER()
+			.RigidBodyDesc.dynamic()
+			.setTranslation(this.x, -this.y)
+			.lockRotations()
+			.setLinearDamping(0.5);
+		this.rigidBody = this.game.world.createRigidBody(rigidBodyDesc);
+
+		const colliderDesc = RAPIER()
+			.ColliderDesc.cuboid(this.size / 2, this.size / 16)
+			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
+			.setCollisionGroups(0x00020007);
+
+		this.game.world.createCollider(colliderDesc, this.rigidBody);
+
+		const colliderDesc2 = RAPIER()
+			.ColliderDesc.cuboid(this.size / 16, this.size / 2)
+			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
+			.setCollisionGroups(0x00020007);
+
+		this.game.world.createCollider(colliderDesc2, this.rigidBody);
+		const colliderDesc3 = RAPIER()
+			.ColliderDesc.cuboid(this.size / 4, this.size / 32)
+			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
+			.setCollisionGroups(0x00020007)
+			.setTranslation(0, this.size / 3);
+		this.game.world.createCollider(colliderDesc3, this.rigidBody);
+
+		const colliderDesc4 = RAPIER()
+			.ColliderDesc.cuboid(this.size / 4, this.size / 32)
+			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
+			.setCollisionGroups(0x00020007)
+			.setTranslation(0, -this.size / 3);
+		this.game.world.createCollider(colliderDesc4, this.rigidBody);
+
+		const colliderDesc5 = RAPIER()
+			.ColliderDesc.cuboid(this.size / 64, this.size / 8)
+			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
+			.setCollisionGroups(0x00020007)
+			.setTranslation(this.size / 6, this.size / 3);
+
+		this.game.world.createCollider(colliderDesc5, this.rigidBody);
+
+		const colliderDesc6 = RAPIER()
+			.ColliderDesc.cuboid(this.size / 64, this.size / 8)
+			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
+			.setCollisionGroups(0x00020007)
+			.setTranslation(this.size / 6, -this.size / 3);
+
+		this.game.world.createCollider(colliderDesc6, this.rigidBody);
+		const colliderDesc7 = RAPIER()
+			.ColliderDesc.cuboid(this.size / 64, this.size / 8)
+			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
+			.setCollisionGroups(0x00020007)
+			.setTranslation(-this.size / 6, this.size / 3);
+
+		this.game.world.createCollider(colliderDesc7, this.rigidBody);
+
+		const colliderDesc8 = RAPIER()
+			.ColliderDesc.cuboid(this.size / 64, this.size / 8)
+			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
+			.setCollisionGroups(0x00020007)
+			.setTranslation(-this.size / 6, -this.size / 3);
+
+		this.game.world.createCollider(colliderDesc8, this.rigidBody);
+
+		this.rigidBody.userData = this;
+	}
+
+	updateVisuals(
+		deltaTime: number,
+		nearestPlayer: Player,
+		dx: number,
+		dy: number,
+		distance: number
+	): void {
+		const angle = Math.atan2(dy, dx);
+
+		const rotationSpeed = 0.0001;
+		this.rotation += rotationSpeed * deltaTime;
+
+		// move eyes
+		this.leftEye?.move(-this.rotation + angle);
+		this.rightEye?.move(-this.rotation + angle);
+
+		let alpha = Math.min(1, 1 - distance / (nearestPlayer.viewDistance * 5));
+		this.leftEye?.update(deltaTime, alpha);
+		this.rightEye?.update(deltaTime, alpha);
+
+		this.enemyContainer.position.set(this.x, this.y);
+	}
+
+	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {
+		if (this.weapon.cooldown <= 0) {
+			// get angle
+			let x = Math.cos(this.shootAngle) + this.position.x;
+			let y = Math.sin(this.shootAngle) + this.position.y;
+			this.weapon.fire(this.position, { x, y });
+
+			this.shootAngle += Math.PI / 10;
 		}
 
 		this.weapon.update(deltaTime);

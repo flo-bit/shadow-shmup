@@ -53,6 +53,8 @@ export default class Player {
 
 	respawnTime: number = 0;
 
+	items: number[] = [0, 0, 0, 0];
+
 	constructor(game: Game, num: number) {
 		this.game = game;
 		this.num = num;
@@ -130,7 +132,7 @@ export default class Player {
 
 		const colliderDesc = RAPIER()
 			.ColliderDesc.cuboid(this.size / 2, this.size / 2)
-			.setCollisionGroups(0x00010013);
+			.setCollisionGroups(0x00010033);
 		this.game.world.createCollider(colliderDesc, this.rigidBody);
 
 		// Attach this Player instance to the rigid body's user data
