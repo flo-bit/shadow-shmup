@@ -5,6 +5,8 @@ import Game from './app';
 import { RAPIER } from './rapier';
 import { type RigidBody } from '@dimforge/rapier2d';
 import Eye from './eye.js';
+import { Light } from './light.js';
+import { blendColors } from './helper.js';
 
 /**
  * Player class
@@ -22,8 +24,6 @@ export default class Player {
 
 	playerContainer: PIXI.Container;
 
-	shadow: PIXI.Graphics;
-
 	healthBar?: PIXI.Graphics;
 
 	speed: number;
@@ -38,7 +38,7 @@ export default class Player {
 
 	color: number;
 
-	light?: PIXI.Sprite;
+	light: Light;
 
 	leftEye: Eye;
 	rightEye: Eye;
@@ -52,6 +52,8 @@ export default class Player {
 	dead: boolean = false;
 
 	respawnTime: number = 0;
+
+	items: number[] = [0, 0, 0, 0];
 
 	constructor(game: Game, num: number) {
 		this.game = game;
@@ -67,10 +69,7 @@ export default class Player {
 		this.playerContainer = new PIXI.Container();
 		game.container.addChild(this.playerContainer);
 
-		this.shadow = new PIXI.Graphics();
-		this.playerContainer.addChild(this.shadow);
-
-		this.createLight();
+		this.light = this.game.lightManager.addLight({ color: blendColors(this.color, 0xffffff, 0.3) });
 
 		const shape = new PIXI.Graphics().rect(0, 0, this.size, this.size).fill(this.color);
 		shape.pivot.set(this.size / 2, this.size / 2);
@@ -92,19 +91,6 @@ export default class Player {
 
 		this.x = 0;
 		this.y = 0;
-	}
-
-	async createLight() {
-		const texture = await PIXI.Assets.load('./light.png');
-		this.light = PIXI.Sprite.from(texture);
-		this.light.tint = 0xfda4af;
-		this.light.anchor.set(0.5);
-		this.light.scale.set((0.5 * this.viewDistance) / 200);
-		this.light.zIndex = -1;
-
-		this.playerContainer.addChild(this.light);
-
-		this.light.mask = this.shadow;
 	}
 
 	createHealthBar() {
@@ -130,7 +116,7 @@ export default class Player {
 
 		const colliderDesc = RAPIER()
 			.ColliderDesc.cuboid(this.size / 2, this.size / 2)
-			.setCollisionGroups(0x00010013);
+			.setCollisionGroups(0x00010033);
 		this.game.world.createCollider(colliderDesc, this.rigidBody);
 
 		// Attach this Player instance to the rigid body's user data
@@ -241,53 +227,12 @@ export default class Player {
 			this.rightEye.move(angle);
 		}
 
-		this.drawShadow();
+		this.light.x = this.x;
+		this.light.y = this.y;
 
 		this.weapon.update(deltaTime);
 
 		this.playerContainer.position.set(this.x, this.y);
-	}
-
-	drawShadow() {
-		// ray cast around the player to create a shadow
-		this.shadow.clear();
-
-		const rays = 1080 / 3;
-
-		const angleStep = (Math.PI * 2) / rays;
-		const rayLength = 100000;
-
-		let firstPoint;
-
-		for (let i = 0; i < rays; i++) {
-			const angle = i * angleStep;
-
-			const ray = new (RAPIER().Ray)(
-				new (RAPIER().Vector2)(this.x, -this.y),
-				new (RAPIER().Vector2)(Math.cos(angle), Math.sin(angle))
-			);
-
-			const hit = this.game.world.castRay(ray, rayLength, false, undefined, 0x000a000a);
-
-			let hitPoint = hit
-				? ray.pointAt(hit.toi)
-				: { x: ray.dir.x * rayLength, y: ray.dir.y * rayLength };
-
-			let x = hitPoint.x - this.x;
-			let y = -hitPoint.y - this.y;
-
-			if (i === 0) {
-				this.shadow.moveTo(x, y);
-				firstPoint = { x, y };
-			} else {
-				this.shadow.lineTo(x, y);
-			}
-
-			if (i === rays - 1 && firstPoint) {
-				this.shadow.lineTo(firstPoint.x, firstPoint.y);
-			}
-		}
-		this.shadow.fill(0);
 	}
 
 	takeDamage(amount: number) {
@@ -304,6 +249,7 @@ export default class Player {
 
 	destroy() {
 		if (this.rigidBody) this.game.world.removeRigidBody(this.rigidBody);
-		this.game.container.removeChild(this.playerContainer);
+		this.playerContainer.destroy();
+		this.light.destroy();
 	}
 }

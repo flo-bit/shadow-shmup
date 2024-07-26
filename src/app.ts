@@ -5,7 +5,7 @@ import { type World, EventQueue } from '@dimforge/rapier2d';
 import { RAPIER } from './rapier.js';
 import ParticleSystem from './particles.js';
 import { Projectile } from './projectile.js';
-import Enemy from './enemy.js';
+import Enemy, { CrossEnemy } from './enemy.js';
 
 import Stats from 'stats.js';
 
@@ -17,6 +17,9 @@ import { sound } from '@pixi/sound';
 import Controls from './controls.js';
 import { ObstacleManager } from './obstacle-manager.js';
 import { WaveManager } from './wave.js';
+import { Item, ItemOptions } from './item.js';
+import { ItemManager } from './item-manager.js';
+import { LightManager } from './light-manager.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -30,6 +33,10 @@ export default class Game {
 	enemyManager?: EnemyManager;
 	playerManager?: PlayerManager;
 	waveManager?: WaveManager;
+
+	itemManager: ItemManager;
+
+	lightManager: LightManager;
 
 	projectileManager?: ProjectileManager;
 
@@ -55,6 +62,11 @@ export default class Game {
 
 	startWave = 0;
 
+	minWidth = 700;
+	minHeight = 1000;
+
+	lightPlaced = false;
+
 	constructor() {
 		this.setup();
 
@@ -62,8 +74,9 @@ export default class Game {
 		this.container = new PIXI.Container();
 
 		this.controls = new Controls(this);
-
 		this.obstacleManager = new ObstacleManager(this);
+		this.itemManager = new ItemManager(this);
+		this.lightManager = new LightManager(this);
 
 		sound.add('music-intro', {
 			url: './music-intro.mp3'
@@ -134,15 +147,20 @@ export default class Game {
 		this.mainContainer.addChild(this.container);
 
 		this.mainContainer.position.set(window.innerWidth / 2, window.innerHeight / 2);
+		// scale the container
+		this.scale = Math.min(window.innerWidth / this.minWidth, window.innerHeight / this.minHeight);
+		this.mainContainer.scale.set(this.scale);
 
 		// add a resize event listener
 		window.addEventListener('resize', () => {
 			app.renderer.resize(window.innerWidth, window.innerHeight);
 
 			this.mainContainer.position.set(window.innerWidth / 2, window.innerHeight / 2);
+			this.scale = Math.min(window.innerWidth / this.minWidth, window.innerHeight / this.minHeight);
+			this.mainContainer.scale.set(this.scale);
 		});
 
-		this.container.scale.set(this.scale);
+		//this.container.scale.set(this.scale);
 
 		app.ticker.add((ticker) => {
 			if (this.stats) this.stats.begin();
@@ -170,8 +188,8 @@ export default class Game {
 				const interpolationSpeed = 0.05;
 				const interpolationFactor = 1 - Math.pow(1 - interpolationSpeed, deltaTime / (1000 / 60));
 
-				this.container.x += (position.x * this.scale - this.container.x) * interpolationFactor;
-				this.container.y += (position.y * this.scale - this.container.y) * interpolationFactor;
+				this.container.x += (position.x - this.container.x) * interpolationFactor;
+				this.container.y += (position.y - this.container.y) * interpolationFactor;
 			}
 
 			if (this.stats) this.stats.end();
@@ -223,6 +241,10 @@ export default class Game {
 		});
 	}
 
+	dropItem(options: ItemOptions) {
+		this.itemManager.addItem(options);
+	}
+
 	addProjectile(data: ProjectileData) {
 		if (!this.projectileManager) return;
 
@@ -246,6 +268,7 @@ export default class Game {
 			let enemy: Enemy | undefined;
 			let projectile: Projectile | undefined;
 			let player: Player | undefined;
+			let item: Item | undefined;
 
 			if (userData1 instanceof Enemy) enemy = userData1;
 			if (userData2 instanceof Enemy) enemy = userData2;
@@ -255,6 +278,9 @@ export default class Game {
 
 			if (userData1 instanceof Player) player = userData1;
 			if (userData2 instanceof Player) player = userData2;
+
+			if (userData1 instanceof Item) item = userData1;
+			if (userData2 instanceof Item) item = userData2;
 
 			if (enemy && projectile) {
 				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, projectile.color);
@@ -273,6 +299,11 @@ export default class Game {
 
 				player.takeDamage(projectile.damage);
 				projectile.destroy();
+			}
+
+			console.log(player, item);
+			if (player && item) {
+				item.pickup(player);
 			}
 
 			if (projectile) {
@@ -315,10 +346,30 @@ export default class Game {
 
 		this.enemyManager?.update(deltaTime);
 
+		this.itemManager.update(deltaTime);
+
+		this.lightManager.update(deltaTime);
+
 		if (this.invincible) {
 			for (let players of this.playerManager?.players ?? []) {
 				players.health = players.maxHealth;
 			}
+		}
+
+		if (this.keys['e']) {
+			let player = this.playerManager?.players[0];
+			if (player && !this.lightPlaced) {
+				this.lightManager.addLight({
+					color: player.color,
+					x: player.x,
+					y: player.y,
+					alpha: 0.2,
+					scale: 0.5
+				});
+				this.lightPlaced = true;
+			}
+		} else {
+			this.lightPlaced = false;
 		}
 
 		let playerManager = this.playerManager;

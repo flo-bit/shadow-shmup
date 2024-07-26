@@ -78,12 +78,18 @@ export default class PlayerManager {
 		position: { x: number; y: number },
 		maxDist: number | undefined = undefined
 	): Player | undefined {
+		if (this.players.length === 1) {
+			const player = this.players[0];
+			const dist = (player.x - position.x) ** 2 + (player.y - position.y) ** 2;
+			if ((!maxDist || dist < maxDist ** 2) && !player.dead) return player;
+		}
+
 		// go through all players and find the closest one
 		let closestPlayer: Player | undefined;
 		let closestDist = Infinity;
 
 		for (let player of this.players) {
-			const dist = (player.x - position.x) ** 2 + (player.y - position.y) ** 2;
+			const dist = Math.hypot(player.x - position.x, player.y - position.y);
 
 			if (dist < closestDist && !player.dead) {
 				closestDist = dist;
@@ -91,7 +97,7 @@ export default class PlayerManager {
 			}
 		}
 
-		if (!maxDist || closestDist < maxDist ** 2) {
+		if (!maxDist || closestDist < maxDist) {
 			return closestPlayer;
 		}
 
