@@ -44,6 +44,8 @@ export class Light {
 
 	detail: number = 120;
 
+	shape?: PIXI.Graphics;
+
 	constructor(game: Game, options: LightOptions) {
 		this.game = game;
 
@@ -65,6 +67,10 @@ export class Light {
 		if (options.detail) this.detail = options.detail;
 		if (options.flicker !== undefined) this.flicker = options.flicker;
 
+		if (this.game.debug) {
+			this.shape = new PIXI.Graphics().circle(0, 0, 5).fill(this.color);
+			this.lightContainer.addChild(this.shape);
+		}
 		this.createLight();
 
 		this.game.container.addChild(this.lightContainer);
@@ -146,7 +152,7 @@ export class Light {
 		const rays = this.detail;
 
 		const angleStep = (Math.PI * 2) / rays;
-		const rayLength = 100000;
+		const rayLength = 10000000;
 
 		let firstPoint;
 
@@ -178,7 +184,7 @@ export class Light {
 				this.shadow.lineTo(firstPoint.x, firstPoint.y);
 			}
 		}
-		this.shadow.fill(0);
+		this.shadow.fill(0, 0);
 	}
 
 	update(deltaTime: number) {
@@ -190,9 +196,9 @@ export class Light {
 			this.light.alpha = this._alpha + (Math.random() - 0.5) * 0.03;
 			this.light.scale.set(this._scale + Math.random() * 0.1);
 
-			if (Math.random() < 1 / deltaTime) {
-				this.light.alpha = this._alpha * 0.5;
-			}
+			// if (Math.random() < 1 / deltaTime) {
+			// 	this.light.alpha = this._alpha * 0.5;
+			// }
 		}
 	}
 

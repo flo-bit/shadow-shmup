@@ -47,7 +47,7 @@ export default class Game {
 
 	debug: boolean = false;
 
-	showStats: boolean = true;
+	showStats: boolean = false;
 
 	stats?: Stats;
 
@@ -78,10 +78,11 @@ export default class Game {
 		this.lightManager = new LightManager(this);
 
 		sound.add('music-intro', {
-			url: './music-intro.mp3'
+			url: './music-intro.mp3',
+			volume: 0.3
 		});
-		sound.add('music', { url: './music.mp3', loop: true });
-		sound.add('laser', { url: './laser.mp3', volume: 0.3 });
+		sound.add('music', { url: './music.mp3', loop: true, volume: 0.3 });
+		sound.add('laser', { url: './laser.mp3', volume: 0.1 });
 	}
 
 	async setupPhysicsWorld() {
@@ -192,8 +193,11 @@ export default class Game {
 				const interpolationSpeed = 0.05;
 				const interpolationFactor = 1 - Math.pow(1 - interpolationSpeed, deltaTime / (1000 / 60));
 
-				this.container.x += (position.x - this.container.x) * interpolationFactor;
-				this.container.y += (position.y - this.container.y) * interpolationFactor;
+				//this.container.x += (position.x - this.container.x) * interpolationFactor;
+				//this.container.y += (position.y - this.container.y) * interpolationFactor;
+
+				this.container.x = position.x;
+				this.container.y = position.y;
 			}
 
 			if (this.stats) this.stats.end();
