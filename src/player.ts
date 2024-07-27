@@ -92,8 +92,8 @@ export default class Player {
 		this.leftEye = new Eye(this.playerContainer, -this.size / 4, 0);
 		this.rightEye = new Eye(this.playerContainer, this.size / 4, 0);
 
-		this.x = 280;
-		this.y = 340;
+		this.x = 0;
+		this.y = 0;
 	}
 
 	createHealthBar() {
