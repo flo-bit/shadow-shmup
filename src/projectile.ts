@@ -23,6 +23,8 @@ export class Projectile {
 
 	hit?: () => void;
 
+	piercing: number = 0;
+
 	constructor(
 		game: Game,
 		data: ProjectileData
@@ -48,6 +50,7 @@ export class Projectile {
 		this.color = data.color ?? 0xffffff;
 
 		this.shape = new PIXI.Graphics().rect(0, 0, this.size, this.size).fill(this.color);
+		this.shape.pivot.set(this.size / 2, this.size / 2);
 
 		this.shape.x = data.position.x;
 		this.shape.y = data.position.y;
@@ -60,7 +63,7 @@ export class Projectile {
 		this.rigidBody = game.world.createRigidBody(rigidBodyDesc);
 
 		const colliderDesc = RAPIER()
-			.ColliderDesc.ball(this.size)
+			.ColliderDesc.cuboid(this.size / 2, this.size / 2)
 			.setCollisionGroups(data.collisionGroups ?? 0x00040002)
 			.setSensor(true)
 			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS);
@@ -74,6 +77,8 @@ export class Projectile {
 		this.showParticles = data.showParticles ?? true;
 
 		this.hit = data.hit;
+
+		if (data.piercing) this.piercing = data.piercing;
 
 		this.isProjectile = true;
 	}

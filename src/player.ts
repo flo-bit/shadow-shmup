@@ -85,7 +85,7 @@ export default class Player {
 		this.speed = 30000;
 		this.shape = shape;
 
-		this.weapon = new Weapon(this.game, { color: this.color, lifetime: 2000 });
+		this.weapon = new Weapon(this.game, { color: this.color, lifetime: 2000, piercing: 1 });
 
 		this.isPlayer = true;
 
@@ -163,18 +163,28 @@ export default class Player {
 	update(deltaTime: number, keys: Record<string, boolean>) {
 		// move the player, wasd
 		if (this.game.playing && !this.dead) {
-			let dx = 0,
-				dy = 0;
-			if (this.game.controls.up(this.num)) dy -= 1;
-			if (this.game.controls.down(this.num)) dy += 1;
-			if (this.game.controls.left(this.num)) dx -= 1;
-			if (this.game.controls.right(this.num)) dx += 1;
+			let dx = this.game.controls.x(this.num),
+				dy = this.game.controls.y(this.num);
+
+			console.log(dx, dy);
+
+			let dist = Math.hypot(dx, dy);
+
+			if (dist > 1) {
+				dx /= dist;
+				dy /= dist;
+			}
+
+			// if (this.game.controls.up(this.num)) dy -= 1;
+			// if (this.game.controls.down(this.num)) dy += 1;
+			// if (this.game.controls.left(this.num)) dx -= 1;
+			// if (this.game.controls.right(this.num)) dx += 1;
 
 			// Normalize diagonal movement
-			if (dx !== 0 && dy !== 0) {
-				dx *= Math.SQRT1_2;
-				dy *= Math.SQRT1_2;
-			}
+			// if (dx !== 0 && dy !== 0) {
+			// 	dx *= Math.SQRT1_2;
+			// 	dy *= Math.SQRT1_2;
+			// }
 
 			let mult = deltaTime * 120 * 0.001;
 			if (dx || dy)

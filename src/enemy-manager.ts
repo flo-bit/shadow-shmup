@@ -51,9 +51,9 @@ export default class EnemyManager {
 		}
 	}
 
-	killAll() {
+	killAll(dropItems: boolean = false) {
 		this.enemies.forEach((enemy) => {
-			enemy.destroy();
+			enemy.destroy(dropItems);
 		});
 
 		this.enemies = [];

@@ -3,13 +3,15 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="apple-mobile-web-app-capable" content="yes">
-		<meta name="theme-color" content="#000000"/>
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+		<meta name="apple-mobile-web-app-title" content="shadow shooter" />
 
-		<link rel="icon" href="/icons/favicon.ico" sizes="32x32">
-		<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
-		<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-		<link rel="manifest" href="/icons/manifest.webmanifest">
+
+		<link rel="icon" href="/icons/favicon.ico" sizes="32x32" />
+		<link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+		<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+		<link rel="manifest" href="/icons/manifest.webmanifest" />
 
 		<title>shadow shooter</title>
 
@@ -18,9 +20,9 @@
 	<body class="m-0 bg-black overflow-hidden overscroll-none select-none">
 		<script src="src/app.ts" type="module"></script>
 
-		<div id="timer" class="absolute top-1 right-1 text-white font-bold">0</div>
+		<div id="counter" class="absolute top-1 right-1 text-white font-bold"></div>
 
-		<div id="debug" class="absolute bottom-1 left-1 text-white font-bold hidden"></div>
+		<div id="debug" class="absolute bottom-1 left-1 text-white font-bold"></div>
 
 		<!-- ui: title, play button -->
 		<div
@@ -32,13 +34,13 @@
 				<h1 id="title" class="font-bold text-5xl mb-8">shadow shooter</h1>
 				<button
 					id="play"
-					class="text-2xl font-semibold border border-white py-2 px-4 bg-white/10 hover:bg-white/20 mb-4"
+					class="text-2xl font-semibold border border-white/20 rounded-xl py-2 px-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm mb-4"
 				>
 					solo
 				</button>
 				<button
 					id="play-coop"
-					class="text-2xl font-semibold border border-white py-2 px-4 bg-white/10 hover:bg-white/20"
+					class="text-2xl font-semibold border border-white/20 rounded-xl py-2 px-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm mb-4"
 				>
 					co-op
 				</button>
@@ -47,7 +49,12 @@
 				<div class="flex items-center gap-3">
 					code by <span class="font-semibold">flo-bit</span>
 					<a href="https://github.com/flo-bit" target="_blank">
-						<svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" class="w-5 fill-white hover:fill-cyan-400">
+						<svg
+							fill="currentColor"
+							viewBox="0 0 24 24"
+							aria-hidden="true"
+							class="w-5 fill-white hover:fill-cyan-400"
+						>
 							<path
 								fill-rule="evenodd"
 								d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
@@ -159,9 +166,22 @@
 			</div>
 		</div>
 
-		<div id="wave" class="absolute inset-0 h-[100dhv] w-screen z-10 flex items-center justify-center hidden">
+		<div
+			id="wave"
+			class="absolute inset-0 h-[100dhv] w-screen z-10 flex items-center justify-center hidden"
+		>
 			<div id="wave-text" class="text-8xl font-bold text-neutral-200">Wave</div>
-			
 		</div>
+
+		<div id="upgrades" class="hidden z-50 absolute inset-0 overflow-y-scroll py-2 sm:py-16 px-2 bg-black/70">
+			<div
+			id="upgrades-container"
+				class="overflow-hidden rounded-lg bg-white/5 mx-auto max-w-5xl backdrop-blur-sm shadow sm:grid sm:grid-cols-2"
+			>
+				
+			</div>
+		</div>
+
+		<div id="items" class="absolute bottom-1 right-3 text-white font-bold text-xl flex flex-col gap-1"></div>
 	</body>
 </html>

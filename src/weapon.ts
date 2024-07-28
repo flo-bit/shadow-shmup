@@ -16,6 +16,8 @@ export type WeaponOptions = {
 	sound?: boolean;
 
 	showParticles?: boolean;
+
+	piercing?: number;
 };
 
 export class Weapon {
@@ -38,6 +40,8 @@ export class Weapon {
 
 	showParticles: boolean = false;
 
+	piercing: number = 0;
+
 	constructor(game: Game, options: WeaponOptions | undefined = undefined) {
 		this.game = game;
 
@@ -57,6 +61,8 @@ export class Weapon {
 		if (options.sound !== undefined) this.sound = options.sound;
 
 		if (options.showParticles !== undefined) this.showParticles = options.showParticles;
+
+		if (options.piercing) this.piercing = options.piercing;
 	}
 
 	fire(position: { x: number; y: number }, enemyPosition: { x: number; y: number }) {
@@ -71,7 +77,8 @@ export class Weapon {
 				color: this.color,
 				collisionGroups: this.collisionGroups,
 				lifetime: this.lifetime,
-				showParticles: this.showParticles
+				showParticles: this.showParticles,
+				piercing: this.piercing
 			});
 			this.cooldown = this.fireRate;
 

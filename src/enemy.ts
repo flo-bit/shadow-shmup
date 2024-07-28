@@ -46,7 +46,7 @@ export default class Enemy implements PlayerHit {
 
 	color: number = 0xfb923c;
 
-	type: number = 0;
+	type: number = -1;
 
 	hitPlayer?(player: Player): void;
 
@@ -249,10 +249,11 @@ export default class Enemy implements PlayerHit {
 		this.attack(deltaTime, player, dx, dy, distance);
 	}
 
-	destroy() {
+	destroy(dropItem: boolean = true) {
 		if (this.destroyed) return;
 
-		this.game.dropItem({ x: this.x, y: this.y, color: this.color, size: 10, type: this.type });
+		if (dropItem)
+			this.game.dropItem({ x: this.x, y: this.y, color: this.color, size: 10, type: this.type });
 
 		this.game.spawnParticles(this.x, this.y, 50, this.color);
 
@@ -277,6 +278,15 @@ export default class Enemy implements PlayerHit {
 export class SphereEnemy extends Enemy {
 	weapon: Weapon;
 
+	indicator?: PIXI.Graphics;
+
+	shootingDistance = 20;
+
+	fireDelay: number = 1000;
+	cooldown: number = 0;
+
+	shooting: boolean = false;
+
 	constructor(game: Game) {
 		super(game);
 
@@ -293,11 +303,39 @@ export class SphereEnemy extends Enemy {
 			showParticles: true
 		});
 
+		this.createIndicator();
+
 		this.speed = 500;
 	}
 
+	async createIndicator() {
+		const texture = await PIXI.Assets.load('./light.png');
+
+		// this.indicator = PIXI.Sprite.from(texture);
+		// this.indicator.anchor.set(0.5);
+		// this.indicator.scale.set(0.0);
+		// this.indicator.alpha = 0.5;
+		// this.indicator.tint = this.color;
+		// this.indicator.zIndex = -10;
+
+		this.indicator = new PIXI.Graphics()
+			.circle(0, 0, this.size + this.shootingDistance)
+			.stroke({ color: this.color, width: 5 });
+		this.indicator.scale.set(0);
+		this.indicator.zIndex = -10;
+		this.enemyContainer.addChild(this.indicator);
+	}
+
 	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {
-		if (distance < 100 && this.weapon.cooldown < 0) {
+		if (this.cooldown > 0) {
+			this.cooldown -= deltaTime;
+
+			if (this.indicator) {
+				this.indicator.scale.set(1 - this.cooldown / this.fireDelay);
+			}
+		}
+
+		if (this.shooting && this.cooldown <= 0 && this.weapon.cooldown <= 0) {
 			for (let i = 0; i < 20; i++) {
 				this.weapon.cooldown = -1;
 				// get angle
@@ -306,6 +344,15 @@ export class SphereEnemy extends Enemy {
 				let y = Math.sin(angle) + this.position.y;
 				this.weapon.fire(this.position, { x, y });
 			}
+
+			this.shooting = false;
+
+			this.indicator?.scale.set(0);
+		}
+
+		if (distance < 150 && this.cooldown <= 0) {
+			this.shooting = true;
+			this.cooldown = this.fireDelay;
 		}
 
 		this.weapon.update(deltaTime);
@@ -318,7 +365,7 @@ export class TriangleEnemy extends Enemy {
 	constructor(game: Game) {
 		super(game);
 
-		this.type = 2;
+		this.type = 0;
 		this.speed = 2000;
 
 		let position = { x: this.x, y: this.y };
@@ -420,9 +467,11 @@ export class TriangleEnemy extends Enemy {
 		}
 	}
 
-	destroy(): void {
+	destroy(dropItem: boolean = true): void {
+		if (this.destroyed) return;
+
 		this.projectile.destroy();
-		super.destroy();
+		super.destroy(dropItem);
 	}
 }
 
@@ -432,14 +481,14 @@ export class PentagonEnemy extends Enemy {
 	constructor(game: Game) {
 		super(game);
 
-		this.type = 3;
+		this.type = 2;
 
 		this.weapon = new Weapon(this.game, {
 			color: this.color,
 			collisionGroups: 0x00100001,
 			projectileSpeed: 0.2,
 			fireRate: 2000,
-			projectileSize: 6,
+			projectileSize: 12,
 			damage: 10,
 			lifetime: 8000
 		});

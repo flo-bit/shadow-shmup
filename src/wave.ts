@@ -96,7 +96,19 @@ type WaveData = {
 
 export const defaultWaves: WaveData[] = [
 	//{ enemies: [{ type: CrossEnemy, num: 1 }], spawnSpeed: 1 },
-	{ enemies: [{ type: TriangleEnemy, num: 5 }], spawnSpeed: 3 },
+	// test wave for measuring performance
+	// {
+	// 	enemies: [
+	// 		{ type: TriangleEnemy, num: 100 },
+	// 		{ type: SphereEnemy, num: 100 },
+	// 		{
+	// 			type: PentagonEnemy,
+	// 			num: 100
+	// 		}
+	// 	],
+	// 	spawnSpeed: 100
+	// },
+	{ enemies: [{ type: SphereEnemy, num: 50 }], spawnSpeed: 3 },
 	{
 		enemies: [
 			{ type: TriangleEnemy, num: 10 },
@@ -270,7 +282,7 @@ export class WaveManager {
 
 	waves: Wave[];
 
-	currentWave: number = 0;
+	currentWave: number = -1;
 
 	constructor(game: Game, startWave: number = 0, waves: WaveData[] = defaultWaves) {
 		this.game = game;
