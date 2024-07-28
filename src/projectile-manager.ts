@@ -13,6 +13,8 @@ export type ProjectileData = {
 	collisionGroups?: number;
 	showParticles?: boolean;
 	hit?: () => void;
+
+	piercing?: number;
 };
 
 export default class ProjectileManager {

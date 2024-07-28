@@ -21,6 +21,8 @@ import { Item, ItemOptions } from './item.js';
 import { ItemManager } from './item-manager.js';
 import { LightManager } from './light-manager.js';
 import { createNoiseSprite } from './helper.js';
+import { addUpgradeOption } from './upgrades.js';
+import { UpgradeManager } from './upgrade-manager.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -37,6 +39,8 @@ export default class Game {
 
 	itemManager: ItemManager;
 
+	upgradeManager: UpgradeManager;
+
 	lightManager: LightManager;
 
 	projectileManager?: ProjectileManager;
@@ -47,7 +51,7 @@ export default class Game {
 
 	debug: boolean = false;
 
-	showStats: boolean = false;
+	showStats: boolean = true;
 
 	stats?: Stats;
 
@@ -64,7 +68,7 @@ export default class Game {
 	startWave = 0;
 
 	minWidth = 700;
-	minHeight = 1000;
+	minHeight = 900;
 
 	constructor() {
 		this.setup();
@@ -76,6 +80,7 @@ export default class Game {
 		this.obstacleManager = new ObstacleManager(this);
 		this.itemManager = new ItemManager(this);
 		this.lightManager = new LightManager(this);
+		this.upgradeManager = new UpgradeManager(this);
 
 		sound.add('music-intro', {
 			url: './music-intro.mp3',
@@ -83,6 +88,29 @@ export default class Game {
 		});
 		sound.add('music', { url: './music.mp3', loop: true, volume: 0.3 });
 		sound.add('laser', { url: './laser.mp3', volume: 0.1 });
+
+		// get upgrade-container
+		const upgradeContainer = document.getElementById('upgrades-container');
+		// if upgradeContainer exists
+		if (upgradeContainer) {
+			for (let i = 0; i < 6; i++) {
+				let option = addUpgradeOption({
+					index: i,
+					total: 6,
+					iconName: 'heart',
+					perk: 'Health',
+					perkValue: '+10%',
+					minusStat: 'Speed',
+					minusStatValue: '-0.1',
+					price: [
+						{ color: 'bg-orange-400', amount: Math.floor(Math.random() * 10 + 1) },
+						{ color: 'bg-sky-400', amount: Math.floor(Math.random() * 10 + 1) }
+					],
+					empty: i == 5
+				});
+				upgradeContainer.appendChild(option);
+			}
+		}
 	}
 
 	async setupPhysicsWorld() {
@@ -134,7 +162,7 @@ export default class Game {
 		const bloomFilter = new AdvancedBloomFilter({
 			threshold: 0.2,
 			quality: 32,
-			bloomScale: 1,
+			bloomScale: 1.4,
 			blur: 4
 		});
 		app.stage.filters = [bloomFilter];
@@ -186,18 +214,18 @@ export default class Game {
 
 			// move the container so that the player is always in the center
 			let position = this.playerManager?.getCenter();
-			if (position) {
+			if (position && this.playing) {
 				position.x = -position.x;
 				position.y = -position.y;
 
 				const interpolationSpeed = 0.05;
 				const interpolationFactor = 1 - Math.pow(1 - interpolationSpeed, deltaTime / (1000 / 60));
 
-				//this.container.x += (position.x - this.container.x) * interpolationFactor;
-				//this.container.y += (position.y - this.container.y) * interpolationFactor;
+				this.container.x += (position.x - this.container.x) * interpolationFactor;
+				this.container.y += (position.y - this.container.y) * interpolationFactor;
 
-				this.container.x = position.x;
-				this.container.y = position.y;
+				// this.container.x = position.x;
+				// this.container.y = position.y;
 			}
 
 			if (this.stats) this.stats.end();
@@ -295,7 +323,9 @@ export default class Game {
 
 				enemy.impulse(projectile.vx * 200000, -projectile.vy * 200000);
 				enemy.takeDamage(projectile.damage);
-				//projectile.destroy();
+
+				projectile.piercing--;
+				if (projectile.piercing < 0) projectile.destroy();
 			}
 
 			if (enemy && player && enemy.hitPlayer) {
@@ -309,7 +339,6 @@ export default class Game {
 				projectile.destroy();
 			}
 
-			console.log(player, item);
 			if (player && item) {
 				item.pickup(player);
 			}
@@ -344,10 +373,6 @@ export default class Game {
 		this.playerManager?.update(deltaTime, this.keys);
 
 		this.playingTime += deltaTime;
-		if (Math.floor(this.playingTime / 1000) !== Math.floor((this.playingTime - deltaTime) / 1000)) {
-			let timer = document.getElementById('timer');
-			if (timer) timer.innerText = Math.floor(this.playingTime / 1000).toString();
-		}
 
 		this.obstacleManager.update(deltaTime);
 
@@ -382,9 +407,13 @@ export default class Game {
 		const wave = this.waveManager?.getCurrentWave();
 		const waveUI = document.getElementById('wave');
 		const waveText = document.getElementById('wave-text');
+
 		if (wave && !wave.isActive && waveText && this.playing) {
 			waveUI?.classList.remove('hidden');
 			waveText.innerText = `Wave ${wave.index + 1}`;
+
+			let counter = document.getElementById('counter');
+			if (counter) counter.innerText = (wave.index + 1).toString();
 		} else {
 			waveUI?.classList.add('hidden');
 		}
@@ -392,28 +421,38 @@ export default class Game {
 		this.projectileManager?.update(deltaTime);
 
 		if (this.playerManager?.allDead()) {
-			this.enemyManager?.killAll();
-			this.projectileManager?.clearAllProjectiles();
-
-			this.playing = false;
-
-			const ui = document.getElementById('ui');
-			ui?.classList.remove('hidden');
-
-			const title = document.getElementById('title');
-			// set inner text to "Game Over"
-			if (title) title.innerText = 'Game Over';
-
-			this.waveManager = new WaveManager(this, this.startWave);
+			this.gameOver();
 		}
 
-		if (this.debug) {
+		if (this.debug || this.showStats) {
 			// get debug text
 			let debugText = document.getElementById('debug');
 			if (debugText) {
 				debugText.innerText = `enemies: ${this.enemyManager?.enemies.length ?? 0}`;
 			}
 		}
+	}
+
+	gameOver() {
+		this.enemyManager?.killAll();
+		this.projectileManager?.clearAllProjectiles();
+		this.itemManager.destroyAll();
+
+		this.playing = false;
+
+		const ui = document.getElementById('ui');
+		ui?.classList.remove('hidden');
+
+		const title = document.getElementById('title');
+		// set inner text to "Game Over"
+		if (title) title.innerText = 'Game Over';
+
+		this.waveManager = new WaveManager(this, this.startWave);
+
+		let counter = document.getElementById('counter');
+		if (counter) counter.innerText = '';
+
+		this.upgradeManager.reset();
 	}
 
 	handleKeyDown(e: KeyboardEvent) {
@@ -469,10 +508,6 @@ export default class Game {
 
 			debugGraphics.moveTo(vtx[i * 4], -vtx[i * 4 + 1]);
 			debugGraphics.lineTo(vtx[i * 4 + 2], -vtx[i * 4 + 3]);
-		}
-
-		for (let i = 0; i < vtx.length / 2; i += 2) {
-			debugGraphics.circle(vtx[i], -vtx[i + 1], 2).fill(0xffffff);
 		}
 	}
 }

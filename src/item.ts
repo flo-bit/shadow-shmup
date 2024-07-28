@@ -43,7 +43,7 @@ export class Item {
 
 		this.type = options.type;
 
-		this.lifetime = options.lifetime ?? 10000;
+		this.lifetime = options.lifetime ?? 20000;
 
 		this.shape = new PIXI.Graphics().circle(0, 0, this.size / 2).fill(this.color);
 
@@ -70,6 +70,40 @@ export class Item {
 		this.rigidBody.userData = this;
 	}
 
+	get x() {
+		if (this.rigidBody) return this.rigidBody.translation().x;
+
+		return this.shape.x;
+	}
+	set x(value) {
+		this.shape.x = value;
+		this.rigidBody?.setTranslation({ x: value, y: -this.y }, true);
+	}
+
+	get y() {
+		if (this.rigidBody) return -this.rigidBody.translation().y;
+
+		return this.shape.y;
+	}
+	set y(value) {
+		this.shape.y = value;
+		this.rigidBody?.setTranslation({ x: this.x, y: -value }, true);
+	}
+
+	get position() {
+		if (this.rigidBody) {
+			let v = this.rigidBody.translation();
+			return { x: v.x, y: -v.y };
+		}
+
+		return this.shape.position;
+	}
+	set position(value) {
+		this.shape.position = value;
+
+		this.rigidBody?.setTranslation({ x: this.x, y: -this.y }, true);
+	}
+
 	async addGlow() {
 		const texture = await PIXI.Assets.load('./light.png');
 		this.light = PIXI.Sprite.from(texture);
@@ -86,6 +120,8 @@ export class Item {
 		this.game.spawnParticles(this.shape.x, this.shape.y, 5, this.color);
 
 		player.items[this.type] += 1;
+
+		this.game.upgradeManager.addItem(this.type);
 		this.destroy();
 	}
 
@@ -96,6 +132,24 @@ export class Item {
 		if (this.life >= this.lifetime) {
 			this.destroy();
 			return;
+		}
+
+		let closestPlayer = this.game.playerManager?.getClosestPlayer({
+			x: this.shape.x,
+			y: this.shape.y
+		});
+
+		if (closestPlayer) {
+			let dx = closestPlayer.x - this.shape.x;
+			let dy = closestPlayer.y - this.shape.y;
+			let dist = Math.hypot(dx, dy);
+
+			// move towards player
+			if (dist < 80) {
+				let speed = 0.3;
+				this.x += (dx / dist) * speed * deltaTime;
+				this.y += (dy / dist) * speed * deltaTime;
+			}
 		}
 		/*
 		let closestPlayer = this.game.lightManager?.getClosestLight({

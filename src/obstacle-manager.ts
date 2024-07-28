@@ -5,9 +5,9 @@ import Obstacle from './obstacles';
 import Alea from 'alea';
 import { Light } from './light';
 
-const CELL_SIZE = 900;
-const OBSTACLE_COUNT_PER_CELL = 20;
-const LIGHT_COUNT_PER_CELL = 3;
+const CELL_SIZE = 1200;
+const OBSTACLE_COUNT_PER_CELL = 40;
+const LIGHT_COUNT_PER_CELL = 4;
 
 type CellCoord = `${number},${number}`;
 
@@ -201,7 +201,7 @@ export class ObstacleManager {
 					x,
 					y,
 					color: color, //0xffffff * rng(),
-					alpha: 0.05 + rng() * 0.15,
+					alpha: 0.08 + rng() * 0.1,
 					scale: 0.5 + rng() * 1
 				});
 				obstacles.push(light);

@@ -21,4 +21,12 @@ export class ItemManager {
 
 		this.items = this.items.filter((item) => !item.destroyed);
 	}
+
+	destroyAll() {
+		this.items.forEach((item) => {
+			item.destroy();
+		});
+
+		this.items = [];
+	}
 }
