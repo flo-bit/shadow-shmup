@@ -1,4 +1,4 @@
-import { Weapon } from './weapon.js';
+import { GunWeapon } from './weapons/gun.js';
 import * as PIXI from 'pixi.js';
 
 import Game from './app';
@@ -7,6 +7,10 @@ import { type RigidBody } from '@dimforge/rapier2d';
 import Eye from './eye.js';
 import { Light } from './light.js';
 import { blendColors } from './helper.js';
+import { BallWeapon } from './weapons/ball.js';
+import { Weapon } from './weapons/weapon.js';
+import { Knife } from './weapons/knife.js';
+import { BurstWeapon } from './weapons/burst.js';
 
 /**
  * Player class
@@ -30,7 +34,7 @@ export default class Player {
 
 	shape: PIXI.Graphics;
 
-	weapon: Weapon;
+	weapon: GunWeapon;
 
 	isPlayer: true;
 
@@ -54,6 +58,8 @@ export default class Player {
 	respawnTime: number = 0;
 
 	items: number[] = [0, 0, 0, 0];
+
+	weapons: Weapon[] = [];
 
 	constructor(game: Game, num: number) {
 		this.game = game;
@@ -82,10 +88,15 @@ export default class Player {
 
 		this.createHealthBar();
 
-		this.speed = 30000;
+		this.speed = 20000;
 		this.shape = shape;
 
-		this.weapon = new Weapon(this.game, { color: this.color, lifetime: 2000, piercing: 1 });
+		this.weapon = new GunWeapon(this.game, {
+			color: this.color,
+			lifetime: 2000,
+			piercing: 1,
+			fireRate: 1000
+		});
 
 		this.isPlayer = true;
 
@@ -94,6 +105,23 @@ export default class Player {
 
 		this.x = 0;
 		this.y = 0;
+
+		for (let i = 0; i < 5; i++) {
+			let ball = new BallWeapon(this.game, this.color);
+			ball.distance = 100 + i * 50;
+			ball.angle = (Math.PI * 2 * i) / 20;
+			ball.speed *= i * 0.1 + 2;
+			this.weapons.push(ball);
+
+			let knife = new Knife(this.game, this.color);
+			knife.distance = 200;
+			knife.angle = (Math.PI * 2 * i) / 5;
+			this.weapons.push(knife);
+		}
+		this.weapons.push(new BurstWeapon(this.game, this.color));
+
+		//this.weapons = [];
+		//this.weapons = [new BallWeapon(this.game, this.color), new Knife(this.game, this.color)];
 	}
 
 	createHealthBar() {
@@ -166,8 +194,6 @@ export default class Player {
 			let dx = this.game.controls.x(this.num),
 				dy = this.game.controls.y(this.num);
 
-			console.log(dx, dy);
-
 			let dist = Math.hypot(dx, dy);
 
 			if (dist > 1) {
@@ -175,23 +201,16 @@ export default class Player {
 				dy /= dist;
 			}
 
-			// if (this.game.controls.up(this.num)) dy -= 1;
-			// if (this.game.controls.down(this.num)) dy += 1;
-			// if (this.game.controls.left(this.num)) dx -= 1;
-			// if (this.game.controls.right(this.num)) dx += 1;
-
-			// Normalize diagonal movement
-			// if (dx !== 0 && dy !== 0) {
-			// 	dx *= Math.SQRT1_2;
-			// 	dy *= Math.SQRT1_2;
-			// }
-
 			let mult = deltaTime * 120 * 0.001;
 			if (dx || dy)
 				this.rigidBody?.applyImpulse(
 					{ x: dx * this.speed * mult, y: -dy * this.speed * mult },
 					true
 				);
+		}
+
+		for (let weapon of this.weapons) {
+			weapon.update(deltaTime, this.x, this.y);
 		}
 
 		if (this.dead && this.respawnTime > 0) {
@@ -249,7 +268,12 @@ export default class Player {
 	}
 
 	takeDamage(amount: number) {
+		if (this.dead) return;
+
 		this.health -= amount;
+
+		this.game.controls.rumble(this.num, (amount / this.maxHealth) * 50);
+
 		if (this.health < 0) {
 			this.health = 0;
 			this.dead = true;
@@ -264,5 +288,9 @@ export default class Player {
 		if (this.rigidBody) this.game.world.removeRigidBody(this.rigidBody);
 		this.playerContainer.destroy();
 		this.light.destroy();
+
+		for (let weapon of this.weapons) {
+			weapon.destroy();
+		}
 	}
 }

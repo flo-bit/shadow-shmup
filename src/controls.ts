@@ -7,6 +7,8 @@ export default class Controls {
 
 	deltaTouch: { x: number; y: number } | undefined = undefined;
 
+	deadzone = 0.1;
+
 	constructor(game: Game) {
 		this.game = game;
 
@@ -84,8 +86,10 @@ export default class Controls {
 		let secondGamepad = navigator.getGamepads()[1];
 
 		if (num === 0 && this.deltaTouch) return this.deltaTouch.x;
-		if (num === 0 && gamepad) return gamepad.axes[0];
-		if (num === 1 && secondGamepad) return secondGamepad.axes[0];
+		if (num === 0 && gamepad)
+			return Math.abs(gamepad.axes[0]) < this.deadzone ? 0 : gamepad.axes[0];
+		if (num === 1 && secondGamepad)
+			return Math.abs(secondGamepad.axes[0]) < this.deadzone ? 0 : secondGamepad.axes[0];
 
 		return this.left(num) + this.right(num);
 	}
@@ -94,8 +98,10 @@ export default class Controls {
 		let secondGamepad = navigator.getGamepads()[1];
 
 		if (num === 0 && this.deltaTouch) return this.deltaTouch.y;
-		if (num === 0 && gamepad) return gamepad.axes[1];
-		if (num === 1 && secondGamepad) return secondGamepad.axes[1];
+		if (num === 0 && gamepad)
+			return Math.abs(gamepad.axes[1]) < this.deadzone ? 0 : gamepad.axes[1];
+		if (num === 1 && secondGamepad)
+			return Math.abs(secondGamepad.axes[1]) < this.deadzone ? 0 : secondGamepad.axes[1];
 
 		return this.up(num) + this.down(num);
 	}
@@ -131,5 +137,18 @@ export default class Controls {
 		if (num === 1) return this.keys['arrowdown'] ? 1 : 0;
 
 		return 0;
+	}
+
+	rumble(num: number = 0, strength: number = 0.5) {
+		let gamepad = navigator.getGamepads()[num];
+
+		if (!gamepad) return;
+
+		strength = Math.min(1, Math.max(0, strength));
+		gamepad.vibrationActuator?.playEffect('dual-rumble', {
+			duration: 100,
+			strongMagnitude: strength,
+			weakMagnitude: strength
+		});
 	}
 }

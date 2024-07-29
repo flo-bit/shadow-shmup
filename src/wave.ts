@@ -108,14 +108,15 @@ export const defaultWaves: WaveData[] = [
 	// 	],
 	// 	spawnSpeed: 100
 	// },
-	{ enemies: [{ type: SphereEnemy, num: 50 }], spawnSpeed: 3 },
 	{
 		enemies: [
-			{ type: TriangleEnemy, num: 10 },
-			{ type: SphereEnemy, num: 5 }
+			{ type: TriangleEnemy, num: 500 },
+			{ type: SphereEnemy, num: 500 }
 		],
-		spawnSpeed: 3
+		spawnSpeed: 10000
 	},
+	{ enemies: [{ type: SphereEnemy, num: 50 }], spawnSpeed: 3 },
+
 	{
 		enemies: [
 			{ type: TriangleEnemy, num: 15 },

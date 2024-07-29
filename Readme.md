@@ -49,6 +49,7 @@ The shadows are coming for you! Can you survive the onslaught? Move with WASD, a
 - [ ] stats
     - [ ] count kills, deaths, damage taken, damage dealt
     - [ ] show stats at end of game
+- [ ] tutorial
 - weapons
     - recoil on player
     - [x] impulse on bullet impact (done for enemies)

@@ -58,7 +58,7 @@ export class Projectile {
 		game.container.addChild(this.shape);
 
 		const rigidBodyDesc = RAPIER()
-			.RigidBodyDesc.dynamic()
+			.RigidBodyDesc.kinematicPositionBased()
 			.setTranslation(this.shape.x, this.shape.y);
 		this.rigidBody = game.world.createRigidBody(rigidBodyDesc);
 

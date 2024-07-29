@@ -1,5 +1,5 @@
-import Game from './app';
-import { Projectile } from './projectile';
+import Game from '../app';
+import { Projectile } from '../projectile';
 
 import { sound } from '@pixi/sound';
 
@@ -20,7 +20,7 @@ export type WeaponOptions = {
 	piercing?: number;
 };
 
-export class Weapon {
+export class GunWeapon {
 	game: Game;
 
 	cooldown: number = 0;

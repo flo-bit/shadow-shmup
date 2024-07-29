@@ -23,6 +23,8 @@ import { LightManager } from './light-manager.js';
 import { createNoiseSprite } from './helper.js';
 import { addUpgradeOption } from './upgrades.js';
 import { UpgradeManager } from './upgrade-manager.js';
+import { BallWeapon } from './weapons/ball.js';
+import { Weapon } from './weapons/weapon.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -305,6 +307,7 @@ export default class Game {
 			let projectile: Projectile | undefined;
 			let player: Player | undefined;
 			let item: Item | undefined;
+			let weapon: Weapon | undefined;
 
 			if (userData1 instanceof Enemy) enemy = userData1;
 			if (userData2 instanceof Enemy) enemy = userData2;
@@ -318,6 +321,9 @@ export default class Game {
 			if (userData1 instanceof Item) item = userData1;
 			if (userData2 instanceof Item) item = userData2;
 
+			if (userData1 instanceof Weapon) weapon = userData1;
+			if (userData2 instanceof Weapon) weapon = userData2;
+
 			if (enemy && projectile) {
 				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, projectile.color);
 
@@ -328,11 +334,17 @@ export default class Game {
 				if (projectile.piercing < 0) projectile.destroy();
 			}
 
+			if (enemy && weapon) {
+				this.spawnParticles(weapon.x, weapon.y, 10, weapon.color);
+
+				enemy.takeDamage(weapon.damage);
+			}
+
 			if (enemy && player && enemy.hitPlayer) {
 				enemy.hitPlayer(player);
 			}
 
-			if (player && projectile) {
+			if (player && !player.dead && projectile && !this.invincible) {
 				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, projectile.color);
 
 				player.takeDamage(projectile.damage);
@@ -390,6 +402,7 @@ export default class Game {
 
 		let playerManager = this.playerManager;
 
+		/*
 		if (playerManager) {
 			let timeSinceLastDamage = playerManager.smallestTimeSinceLastDamage();
 			if (timeSinceLastDamage < 150) {
@@ -397,12 +410,12 @@ export default class Game {
 			} else {
 				this.container.alpha = 1;
 			}
-		}
+		}*/
 
 		// if (Math.random() < deltaTime * 0.006) {
 		// 	this.enemyManager?.addEnemy();
 		// }
-		this.waveManager?.update(deltaTime);
+		if (this.playing) this.waveManager?.update(deltaTime);
 
 		const wave = this.waveManager?.getCurrentWave();
 		const waveUI = document.getElementById('wave');
