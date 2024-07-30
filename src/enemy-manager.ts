@@ -23,6 +23,8 @@ export default class EnemyManager {
 	addEnemy(enemyType: typeof Enemy = this.randomEnemyType()) {
 		const enemy = new enemyType(this.game);
 		this.enemies.push(enemy);
+		
+		return enemy;
 	}
 
 	update(deltaTime: number) {

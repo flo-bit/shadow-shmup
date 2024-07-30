@@ -30,6 +30,7 @@ export default class Obstacle {
 		this.graphics = new PIXI.Graphics().rect(0, 0, width, height).fill(0);
 		this.graphics.pivot.set(width / 2, height / 2);
 		this.graphics.position.set(x, y);
+		this.graphics.zIndex = -10;
 
 		this.container = container;
 		container.addChild(this.graphics);

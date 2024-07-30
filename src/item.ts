@@ -12,6 +12,7 @@ export type ItemOptions = {
 	type: number;
 	collisionGroups?: number;
 	lifetime?: number;
+	value?: number;
 };
 
 export class Item {
@@ -35,6 +36,8 @@ export class Item {
 
 	light?: PIXI.Sprite;
 
+	value: number = 1;
+
 	constructor(game: Game, options: ItemOptions) {
 		this.game = game;
 
@@ -49,6 +52,8 @@ export class Item {
 
 		this.shape.x = options.x;
 		this.shape.y = options.y;
+
+		if (options.value) this.value = options.value;
 
 		game.container.addChild(this.shape);
 
@@ -121,7 +126,7 @@ export class Item {
 
 		player.items[this.type] += 1;
 
-		this.game.upgradeManager.addItem(this.type);
+		this.game.upgradeManager.addItem(this);
 		this.destroy();
 	}
 

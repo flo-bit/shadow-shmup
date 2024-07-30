@@ -106,19 +106,19 @@ export default class Player {
 		this.x = 0;
 		this.y = 0;
 
-		for (let i = 0; i < 5; i++) {
-			let ball = new BallWeapon(this.game, this.color);
-			ball.distance = 100 + i * 50;
-			ball.angle = (Math.PI * 2 * i) / 20;
-			ball.speed *= i * 0.1 + 2;
-			this.weapons.push(ball);
+		// for (let i = 0; i < 5; i++) {
+		// 	let ball = new BallWeapon(this.game, this.color);
+		// 	ball.distance = 100 + i * 50;
+		// 	ball.angle = (Math.PI * 2 * i) / 20;
+		// 	ball.speed *= i * 0.1 + 2;
+		// 	this.weapons.push(ball);
 
-			let knife = new Knife(this.game, this.color);
-			knife.distance = 200;
-			knife.angle = (Math.PI * 2 * i) / 5;
-			this.weapons.push(knife);
-		}
-		this.weapons.push(new BurstWeapon(this.game, this.color));
+		// 	let knife = new Knife(this.game, this.color);
+		// 	knife.distance = 200;
+		// 	knife.angle = (Math.PI * 2 * i) / 5;
+		// 	this.weapons.push(knife);
+		// }
+		// this.weapons.push(new BurstWeapon(this.game, this.color));
 
 		//this.weapons = [];
 		//this.weapons = [new BallWeapon(this.game, this.color), new Knife(this.game, this.color)];

@@ -1,65 +1,56 @@
 import Game from './app';
+import { Item } from './item';
 
 export class UpgradeManager {
-	colors_classes = ['bg-sky-500', 'bg-orange-500', 'bg-emerald-500'];
+	colors_classes = ['bg-sky-500', 'bg-pink-500', 'bg-emerald-500'];
 	colors: number[] = [];
 
-	items: number[] = [0, 0, 0];
+	items: number = 0;
+	neededItems: number = 4;
 
 	game: Game;
 
-	itemUI?: HTMLElement;
-
-	itemCounters: HTMLElement[] = [];
+	itemsUI?: HTMLElement;
 
 	constructor(game: Game) {
 		this.game = game;
 
-		this.itemUI = document.getElementById('items') ?? undefined;
-
-		this.createUI();
+		this.itemsUI = document.getElementById('items') ?? undefined;
 	}
 
-	createUI() {
-		if (!this.itemUI) return;
-
-		this.itemUI.innerHTML = '';
-
-		let count = this.colors_classes.length;
-		for (let i = 0; i < count; i++) {
-			const stat = document.createElement('div');
-			stat.className = 'flex items-center gap-2 justify-end';
-
-			const stat1 = document.createElement('div');
-			stat1.className = 'block h-4 w-4 rounded-full relative ' + this.colors_classes[i];
-
-			const statText = document.createElement('div');
-			statText.className = 'block';
-			statText.innerText = this.items[i].toString();
-			stat.appendChild(statText);
-
-			this.itemCounters.push(statText);
-
-			const statGlow = document.createElement('div');
-			statGlow.className =
-				'absolute -inset-0.5 h-5 w-5 rounded-full blur-sm ' + this.colors_classes[i];
-			stat1.appendChild(statGlow);
-
-			stat.appendChild(stat1);
-			this.itemUI.appendChild(stat);
-		}
-	}
+	createUI() {}
 
 	reset() {
-		for (let i = 0; i < this.items.length; i++) {
-			this.items[i] = 0;
-			this.itemCounters[i].innerText = '0';
+		this.items = 0;
+
+		// remove all items from UI
+		if (this.itemsUI) {
+			this.itemsUI.innerHTML = '';
 		}
 	}
 
-	addItem(index: number) {
-		this.items[index]++;
+	addItem(item: Item) {
+		this.items += item.value;
 
-		this.itemCounters[index].innerText = this.items[index].toString();
+		// get percentage of needed:
+		const percentage = (item.value / this.neededItems) * 100;
+		// add to UI
+		if (this.itemsUI) {
+			let itemUI = document.createElement('div');
+
+			itemUI.classList.add(
+				'h-full',
+				'transition-all',
+				'duration-200',
+				this.colors_classes[item.type]
+			);
+			// set width to percentage dwv
+			itemUI.style.width = '0px';
+			setTimeout(() => {
+				itemUI.style.width = `${percentage}%`;
+			}, 100);
+
+			this.itemsUI.appendChild(itemUI);
+		}
 	}
 }

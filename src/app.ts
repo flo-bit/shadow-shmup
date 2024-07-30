@@ -53,7 +53,7 @@ export default class Game {
 
 	debug: boolean = false;
 
-	showStats: boolean = true;
+	showStats: boolean = false;
 
 	stats?: Stats;
 
@@ -400,9 +400,13 @@ export default class Game {
 			}
 		}
 
-		let playerManager = this.playerManager;
+		if (this.upgradeManager.items >= this.upgradeManager.neededItems) {
+			this.waveManager?.nextWave();
+			this.upgradeManager.reset();
+		}
 
 		/*
+		let playerManager = this.playerManager;
 		if (playerManager) {
 			let timeSinceLastDamage = playerManager.smallestTimeSinceLastDamage();
 			if (timeSinceLastDamage < 150) {
@@ -424,9 +428,6 @@ export default class Game {
 		if (wave && !wave.isActive && waveText && this.playing) {
 			waveUI?.classList.remove('hidden');
 			waveText.innerText = `Wave ${wave.index + 1}`;
-
-			let counter = document.getElementById('counter');
-			if (counter) counter.innerText = (wave.index + 1).toString();
 		} else {
 			waveUI?.classList.add('hidden');
 		}
@@ -460,7 +461,7 @@ export default class Game {
 		// set inner text to "Game Over"
 		if (title) title.innerText = 'Game Over';
 
-		this.waveManager = new WaveManager(this, this.startWave);
+		this.waveManager = new WaveManager(this, -1);
 
 		let counter = document.getElementById('counter');
 		if (counter) counter.innerText = '';

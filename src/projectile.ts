@@ -49,7 +49,11 @@ export class Projectile {
 
 		this.color = data.color ?? 0xffffff;
 
-		this.shape = new PIXI.Graphics().rect(0, 0, this.size, this.size).fill(this.color);
+		this.shape = new PIXI.Graphics().rect(0, 0, this.size, this.size);
+		if (data.outline) this.shape.stroke({ color: this.color, width: 4 });
+		else this.shape.fill(this.color);
+
+		this.shape.zIndex = 10;
 		this.shape.pivot.set(this.size / 2, this.size / 2);
 
 		this.shape.x = data.position.x;

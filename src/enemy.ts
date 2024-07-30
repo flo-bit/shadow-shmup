@@ -48,6 +48,8 @@ export default class Enemy implements PlayerHit {
 
 	type: number = -1;
 
+	value: number = 1;
+
 	hitPlayer?(player: Player): void;
 
 	constructor(game: Game) {
@@ -254,7 +256,14 @@ export default class Enemy implements PlayerHit {
 		if (this.destroyed) return;
 
 		if (dropItem)
-			this.game.dropItem({ x: this.x, y: this.y, color: this.color, size: 10, type: this.type });
+			this.game.dropItem({
+				x: this.x,
+				y: this.y,
+				color: this.color,
+				size: 10,
+				type: this.type,
+				value: this.value
+			});
 
 		this.game.spawnParticles(this.x, this.y, 50, this.color);
 
@@ -481,7 +490,8 @@ export class PentagonEnemy extends Enemy {
 			fireRate: 2000,
 			projectileSize: 12,
 			damage: 10,
-			lifetime: 8000
+			lifetime: 8000,
+			outline: true
 		});
 
 		this.speed = 900;
