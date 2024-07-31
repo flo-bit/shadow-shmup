@@ -343,7 +343,7 @@ export default class Game {
 				player.takeDamage(projectile.damage);
 				projectile.destroy();
 
-				sound.play('impact');
+				sound.play('shmup-solo');
 			}
 
 			if (player && item) {
