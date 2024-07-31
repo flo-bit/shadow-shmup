@@ -12,6 +12,7 @@ export type ItemOptions = {
 	type: number;
 	collisionGroups?: number;
 	lifetime?: number;
+	value?: number;
 };
 
 export class Item {
@@ -35,20 +36,24 @@ export class Item {
 
 	light?: PIXI.Sprite;
 
+	value: number = 1;
+
 	constructor(game: Game, options: ItemOptions) {
 		this.game = game;
 
 		this.size = options.size;
-		this.color = options.color;
+		this.color = 0xf59e0b; //options.color;
 
 		this.type = options.type;
 
-		this.lifetime = options.lifetime ?? 20000;
+		this.lifetime = options.lifetime ?? 30000;
 
 		this.shape = new PIXI.Graphics().circle(0, 0, this.size / 2).fill(this.color);
 
 		this.shape.x = options.x;
 		this.shape.y = options.y;
+
+		if (options.value) this.value = options.value;
 
 		game.container.addChild(this.shape);
 
@@ -121,7 +126,7 @@ export class Item {
 
 		player.items[this.type] += 1;
 
-		this.game.upgradeManager.addItem(this.type);
+		this.game.upgradeManager.addItem(this);
 		this.destroy();
 	}
 
@@ -145,22 +150,12 @@ export class Item {
 			let dist = Math.hypot(dx, dy);
 
 			// move towards player
-			if (dist < 80) {
-				let speed = 0.3;
+			if (dist < closestPlayer.coinMagnetRange) {
+				let speed = 0.4;
 				this.x += (dx / dist) * speed * deltaTime;
 				this.y += (dy / dist) * speed * deltaTime;
 			}
 		}
-		/*
-		let closestPlayer = this.game.lightManager?.getClosestLight({
-			x: this.shape.x,
-			y: this.shape.y
-		});
-
-		if (closestPlayer) {
-			let dist = Math.hypot(closestPlayer.x - this.shape.x, closestPlayer.y - this.shape.y);
-			this.shape.alpha = 1 - dist / (closestPlayer.scale * 300);
-		}*/
 
 		this.shape.scale.set(1 - this.life / this.lifetime + 0.2);
 	}

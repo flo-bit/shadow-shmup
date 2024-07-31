@@ -12,6 +12,9 @@ export type ProjectileData = {
 	lifetime?: number;
 	collisionGroups?: number;
 	showParticles?: boolean;
+
+	outline?: boolean;
+
 	hit?: () => void;
 
 	piercing?: number;

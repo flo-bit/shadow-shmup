@@ -25,7 +25,13 @@ export class LightManager {
 
 	getClosestLight(
 		position: { x: number; y: number },
-		maxDist: number | undefined = undefined
+		maxDist: number | undefined = undefined,
+		output:
+			| {
+					light: Light | undefined;
+					distance: number;
+			  }
+			| undefined = undefined
 	): Light | undefined {
 		position.y = -position.y;
 		let solid = true;
@@ -35,26 +41,30 @@ export class LightManager {
 		if (proj) {
 			let light = proj.collider.parent()?.userData as Light;
 
-			return light;
+			if (!light) {
+				if (output) {
+					output.light = undefined;
+					output.distance = 0;
+				}
+				return;
+			}
+
+			// check if light is within max distance
+			const dist = Math.hypot(light.x - position.x, light.y - position.y);
+
+			if (!maxDist || dist < maxDist) {
+				if (output) {
+					output.light = light;
+					output.distance = dist;
+				}
+				return light;
+			}
 		}
 
-		// let closestLight: Light | undefined;
-		// let closestDistance = Infinity;
-
-		// for (let light of this.lights) {
-		// 	if (light.destroyed) continue;
-		// 	console.log(light);
-		// 	const distance = Math.hypot(light.x - position.x, light.y - position.y);
-		// 	if (distance < closestDistance) {
-		// 		closestDistance = distance;
-		// 		closestLight = light;
-		// 	}
-		// }
-
-		// if (!maxDist || closestDistance < maxDist) {
-		// 	return closestLight;
-		// }
-
-		// return undefined;
+		if (output) {
+			output.light = undefined;
+			output.distance = 0;
+		}
+		return undefined;
 	}
 }

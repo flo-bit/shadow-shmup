@@ -4,9 +4,9 @@ import { RAPIER } from './rapier';
 import { Vector2, type RigidBody } from '@dimforge/rapier2d';
 import Eye from './eye';
 import Player from './player';
-import { Weapon } from './weapon';
+import { GunWeapon } from './weapons/gun';
 import { Projectile } from './projectile';
-import { Light } from './light';
+import { sound } from '@pixi/sound';
 
 interface PlayerHit {
 	hitPlayer?(player: Player): void;
@@ -23,8 +23,6 @@ export default class Enemy implements PlayerHit {
 	maxHealth: number;
 
 	healthBar?: PIXI.Graphics;
-
-	damage: number = 10;
 
 	speed: number = 500;
 
@@ -44,9 +42,11 @@ export default class Enemy implements PlayerHit {
 
 	eyes?: PIXI.Container;
 
-	color: number = 0xfb923c;
+	color: number = 0xd946ef;
 
 	type: number = -1;
+
+	value: number = 1;
 
 	hitPlayer?(player: Player): void;
 
@@ -64,7 +64,7 @@ export default class Enemy implements PlayerHit {
 
 		this.createShape();
 
-		this.maxHealth = 100;
+		this.maxHealth = 10;
 		this.health = this.maxHealth;
 
 		if (game.debug) this.createHealthBar();
@@ -86,7 +86,7 @@ export default class Enemy implements PlayerHit {
 		if (position) {
 			// create random direction vector
 			let point = { x: Math.random() - 0.5, y: Math.random() - 0.5 };
-			let length = 1000;
+			let length = 500;
 			let norm = Math.sqrt(point.x * point.x + point.y * point.y);
 			point.x = (point.x / norm) * length;
 			point.y = (point.y / norm) * length;
@@ -201,10 +201,20 @@ export default class Enemy implements PlayerHit {
 		}
 	}
 
+	updateEyes(deltaTime: number, nearestPlayer: Player, distance: number) {
+		if (distance < nearestPlayer.viewDistance * 1.5) {
+			let alpha = Math.min(1, 1 - distance / (nearestPlayer.viewDistance * 1.5));
+			this.leftEye?.update(deltaTime, alpha);
+			this.rightEye?.update(deltaTime, alpha);
+		} else {
+			this.leftEye?.update(deltaTime, 0);
+			this.rightEye?.update(deltaTime, 0);
+		}
+	}
+
 	updateVisuals(
 		deltaTime: number,
 		nearestPlayer: Player,
-		nearestLight: Light | undefined,
 		dx: number,
 		dy: number,
 		distance: number
@@ -214,16 +224,7 @@ export default class Enemy implements PlayerHit {
 		this.leftEye?.move(angle);
 		this.rightEye?.move(angle);
 
-		if (nearestLight) {
-			const light_distance = Math.hypot(nearestLight.x - this.x, nearestLight.y - this.y);
-
-			let alpha = Math.min(1, 1 - light_distance / (nearestLight.scale * 350));
-			this.leftEye?.update(deltaTime, alpha);
-			this.rightEye?.update(deltaTime, alpha);
-		} else {
-			this.leftEye?.update(deltaTime, 0);
-			this.rightEye?.update(deltaTime, 0);
-		}
+		this.updateEyes(deltaTime, nearestPlayer, distance);
 
 		this.enemyContainer.position.set(this.x, this.y);
 	}
@@ -234,7 +235,7 @@ export default class Enemy implements PlayerHit {
 
 	update(deltaTime: number) {
 		let player = this.game.playerManager?.getClosestPlayer(this.position);
-		let light = this.game.lightManager?.getClosestLight(this.position);
+		//let light = this.game.lightManager?.getClosestLight(this.position);
 
 		if (this.destroyed || !player) return;
 
@@ -244,7 +245,7 @@ export default class Enemy implements PlayerHit {
 
 		this.move(deltaTime, player, dx, dy, distance);
 
-		this.updateVisuals(deltaTime, player, light, dx, dy, distance);
+		this.updateVisuals(deltaTime, player, dx, dy, distance);
 
 		this.attack(deltaTime, player, dx, dy, distance);
 	}
@@ -253,7 +254,14 @@ export default class Enemy implements PlayerHit {
 		if (this.destroyed) return;
 
 		if (dropItem)
-			this.game.dropItem({ x: this.x, y: this.y, color: this.color, size: 10, type: this.type });
+			this.game.dropItem({
+				x: this.x,
+				y: this.y,
+				color: this.color,
+				size: 10,
+				type: this.type,
+				value: this.value
+			});
 
 		this.game.spawnParticles(this.x, this.y, 50, this.color);
 
@@ -272,11 +280,13 @@ export default class Enemy implements PlayerHit {
 		if (this.health <= 0) {
 			this.destroy();
 		}
+
+		sound.play('hit');
 	}
 }
 
 export class SphereEnemy extends Enemy {
-	weapon: Weapon;
+	weapon: GunWeapon;
 
 	indicator?: PIXI.Graphics;
 
@@ -287,12 +297,14 @@ export class SphereEnemy extends Enemy {
 
 	shooting: boolean = false;
 
+	burstNumber: number = 10;
+
 	constructor(game: Game) {
 		super(game);
 
 		this.type = 1;
 
-		this.weapon = new Weapon(this.game, {
+		this.weapon = new GunWeapon(this.game, {
 			color: this.color,
 			collisionGroups: 0x00100001,
 			projectileSpeed: 0.3,
@@ -305,7 +317,7 @@ export class SphereEnemy extends Enemy {
 
 		this.createIndicator();
 
-		this.speed = 500;
+		this.speed = 300;
 	}
 
 	async createIndicator() {
@@ -336,10 +348,10 @@ export class SphereEnemy extends Enemy {
 		}
 
 		if (this.shooting && this.cooldown <= 0 && this.weapon.cooldown <= 0) {
-			for (let i = 0; i < 20; i++) {
+			for (let i = 0; i < this.burstNumber; i++) {
 				this.weapon.cooldown = -1;
 				// get angle
-				let angle = (Math.PI / 10) * i;
+				let angle = (Math.PI / this.burstNumber) * 2 * i;
 				let x = Math.cos(angle) + this.position.x;
 				let y = Math.sin(angle) + this.position.y;
 				this.weapon.fire(this.position, { x, y });
@@ -366,7 +378,7 @@ export class TriangleEnemy extends Enemy {
 		super(game);
 
 		this.type = 0;
-		this.speed = 2000;
+		this.speed = 600;
 
 		let position = { x: this.x, y: this.y };
 
@@ -386,7 +398,7 @@ export class TriangleEnemy extends Enemy {
 	}
 
 	createEyes() {
-		this.color = 0x38bdf8;
+		this.color = 0x0ea5e9;
 		super.createEyes();
 	}
 
@@ -424,7 +436,6 @@ export class TriangleEnemy extends Enemy {
 	updateVisuals(
 		deltaTime: number,
 		nearestPlayer: Player,
-		nearestLight: Light | undefined,
 		dx: number,
 		dy: number,
 		distance: number
@@ -436,16 +447,7 @@ export class TriangleEnemy extends Enemy {
 		this.leftEye?.move(Math.PI / 2);
 		this.rightEye?.move(Math.PI / 2);
 
-		if (nearestLight) {
-			const light_distance = Math.hypot(nearestLight.x - this.x, nearestLight.y - this.y);
-
-			let alpha = Math.min(1, 1 - light_distance / (nearestLight.scale * 350));
-			this.leftEye?.update(deltaTime, alpha);
-			this.rightEye?.update(deltaTime, alpha);
-		} else {
-			this.leftEye?.update(deltaTime, 0);
-			this.rightEye?.update(deltaTime, 0);
-		}
+		this.updateEyes(deltaTime, nearestPlayer, distance);
 
 		this.rotation = angle - Math.PI / 2;
 
@@ -476,28 +478,28 @@ export class TriangleEnemy extends Enemy {
 }
 
 export class PentagonEnemy extends Enemy {
-	weapon: Weapon;
+	weapon: GunWeapon;
 
 	constructor(game: Game) {
 		super(game);
 
 		this.type = 2;
 
-		this.weapon = new Weapon(this.game, {
+		this.weapon = new GunWeapon(this.game, {
 			color: this.color,
 			collisionGroups: 0x00100001,
-			projectileSpeed: 0.2,
-			fireRate: 2000,
+			projectileSpeed: 0.15,
+			fireRate: 5000,
 			projectileSize: 12,
 			damage: 10,
-			lifetime: 8000
+			lifetime: 4000
 		});
 
-		this.speed = 1000;
+		this.speed = 900;
 	}
 
 	createEyes() {
-		this.color = 0x4ade80;
+		this.color = 0x6366f1;
 		super.createEyes();
 	}
 
@@ -544,7 +546,6 @@ export class PentagonEnemy extends Enemy {
 	updateVisuals(
 		deltaTime: number,
 		nearestPlayer: Player,
-		nearestLight: Light | undefined,
 		dx: number,
 		dy: number,
 		distance: number
@@ -558,16 +559,7 @@ export class PentagonEnemy extends Enemy {
 		this.leftEye?.move(-this.rotation + angle);
 		this.rightEye?.move(-this.rotation + angle);
 
-		if (nearestLight) {
-			const light_distance = Math.hypot(nearestLight.x - this.x, nearestLight.y - this.y);
-
-			let alpha = Math.min(1, 1 - light_distance / (nearestLight.scale * 350));
-			this.leftEye?.update(deltaTime, alpha);
-			this.rightEye?.update(deltaTime, alpha);
-		} else {
-			this.leftEye?.update(deltaTime, 0);
-			this.rightEye?.update(deltaTime, 0);
-		}
+		this.updateEyes(deltaTime, nearestPlayer, distance);
 
 		this.enemyContainer.position.set(this.x, this.y);
 	}
@@ -582,7 +574,7 @@ export class PentagonEnemy extends Enemy {
 }
 
 export class CrossEnemy extends Enemy {
-	weapon: Weapon;
+	weapon: GunWeapon;
 
 	shootAngle: number = 0;
 
@@ -591,7 +583,7 @@ export class CrossEnemy extends Enemy {
 
 		this.type = 4;
 
-		this.weapon = new Weapon(this.game, {
+		this.weapon = new GunWeapon(this.game, {
 			color: this.color,
 			collisionGroups: 0x00100001,
 			projectileSpeed: 0.2,
@@ -606,7 +598,7 @@ export class CrossEnemy extends Enemy {
 	}
 
 	createEyes() {
-		this.size = 500;
+		this.size = 100;
 		this.color = 0x0284c7;
 		this.eyes = new PIXI.Container();
 		this.enemyContainer.addChild(this.eyes);
@@ -699,7 +691,6 @@ export class CrossEnemy extends Enemy {
 	updateVisuals(
 		deltaTime: number,
 		nearestPlayer: Player,
-		nearestLight: Light | undefined,
 		dx: number,
 		dy: number,
 		distance: number
@@ -713,16 +704,7 @@ export class CrossEnemy extends Enemy {
 		this.leftEye?.move(-this.rotation + angle);
 		this.rightEye?.move(-this.rotation + angle);
 
-		if (nearestLight) {
-			const light_distance = Math.hypot(nearestLight.x - this.x, nearestLight.y - this.y);
-
-			let alpha = Math.min(1, 1 - light_distance / (nearestLight.scale * 350));
-			this.leftEye?.update(deltaTime, alpha);
-			this.rightEye?.update(deltaTime, alpha);
-		} else {
-			this.leftEye?.update(deltaTime, 0);
-			this.rightEye?.update(deltaTime, 0);
-		}
+		this.updateEyes(deltaTime, nearestPlayer, distance);
 
 		this.enemyContainer.position.set(this.x, this.y);
 	}

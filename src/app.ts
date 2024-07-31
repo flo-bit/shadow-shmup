@@ -23,6 +23,8 @@ import { LightManager } from './light-manager.js';
 import { createNoiseSprite } from './helper.js';
 import { addUpgradeOption } from './upgrades.js';
 import { UpgradeManager } from './upgrade-manager.js';
+import { BallWeapon } from './weapons/ball.js';
+import { Weapon } from './weapons/weapon.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -51,11 +53,13 @@ export default class Game {
 
 	debug: boolean = false;
 
-	showStats: boolean = true;
+	showStats: boolean = false;
 
 	stats?: Stats;
 
 	playing: boolean = false;
+
+	paused: boolean = false;
 
 	controls: Controls;
 
@@ -89,28 +93,12 @@ export default class Game {
 		sound.add('music', { url: './music.mp3', loop: true, volume: 0.3 });
 		sound.add('laser', { url: './laser.mp3', volume: 0.1 });
 
-		// get upgrade-container
-		const upgradeContainer = document.getElementById('upgrades-container');
-		// if upgradeContainer exists
-		if (upgradeContainer) {
-			for (let i = 0; i < 6; i++) {
-				let option = addUpgradeOption({
-					index: i,
-					total: 6,
-					iconName: 'heart',
-					perk: 'Health',
-					perkValue: '+10%',
-					minusStat: 'Speed',
-					minusStatValue: '-0.1',
-					price: [
-						{ color: 'bg-orange-400', amount: Math.floor(Math.random() * 10 + 1) },
-						{ color: 'bg-sky-400', amount: Math.floor(Math.random() * 10 + 1) }
-					],
-					empty: i == 5
-				});
-				upgradeContainer.appendChild(option);
-			}
-		}
+		sound.add('impact', { url: './impact2.mp3', volume: 0.5 });
+		sound.add('hit', { url: './impact4.mp3', volume: 0.08 });
+
+		sound.add('shmup-solo', { url: './shmup-solo.mp3', volume: 0.5 });
+		sound.add('shmup-coop', { url: './shmup-coop.mp3', volume: 0.5 });
+		sound.add('coin', { url: './coin.mp3', volume: 0.1 });
 	}
 
 	async setupPhysicsWorld() {
@@ -196,6 +184,7 @@ export default class Game {
 		this.mainContainer.addChild(noise);
 
 		app.ticker.add((ticker) => {
+			if (this.paused) return;
 			if (this.stats) this.stats.begin();
 
 			// get ellapsed time
@@ -260,6 +249,8 @@ export default class Game {
 			this.startMusic();
 
 			this.playingTime = 0;
+
+			sound.play('shmup-solo');
 		});
 
 		const playCoopButton = document.getElementById('play-coop');
@@ -274,6 +265,8 @@ export default class Game {
 			this.startMusic();
 
 			this.playingTime = 0;
+
+			sound.play('shmup-coop');
 		});
 	}
 
@@ -305,6 +298,7 @@ export default class Game {
 			let projectile: Projectile | undefined;
 			let player: Player | undefined;
 			let item: Item | undefined;
+			let weapon: Weapon | undefined;
 
 			if (userData1 instanceof Enemy) enemy = userData1;
 			if (userData2 instanceof Enemy) enemy = userData2;
@@ -318,6 +312,9 @@ export default class Game {
 			if (userData1 instanceof Item) item = userData1;
 			if (userData2 instanceof Item) item = userData2;
 
+			if (userData1 instanceof Weapon) weapon = userData1;
+			if (userData2 instanceof Weapon) weapon = userData2;
+
 			if (enemy && projectile) {
 				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, projectile.color);
 
@@ -328,19 +325,31 @@ export default class Game {
 				if (projectile.piercing < 0) projectile.destroy();
 			}
 
+			if (enemy && weapon) {
+				this.spawnParticles(weapon.x, weapon.y, 50, weapon.color);
+
+				enemy.takeDamage(weapon.damage);
+
+				console.log('enemy hit');
+			}
+
 			if (enemy && player && enemy.hitPlayer) {
 				enemy.hitPlayer(player);
 			}
 
-			if (player && projectile) {
+			if (player && !player.dead && projectile && !this.invincible) {
 				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, projectile.color);
 
 				player.takeDamage(projectile.damage);
 				projectile.destroy();
+
+				sound.play('impact');
 			}
 
 			if (player && item) {
 				item.pickup(player);
+
+				// sound.play('coin');
 			}
 
 			if (projectile) {
@@ -350,6 +359,7 @@ export default class Game {
 	}
 
 	spawnParticles(x: number, y: number, num: number, color: number = 0xffffff) {
+		console.log('spawn particles', x, y, num, color);
 		for (let i = 0; i < num; i++) {
 			this.particleSystem?.createParticle(
 				x,
@@ -384,12 +394,19 @@ export default class Game {
 
 		if (this.invincible) {
 			for (let players of this.playerManager?.players ?? []) {
-				players.health = players.maxHealth;
+				players.health = players._maxHealth;
 			}
 		}
 
-		let playerManager = this.playerManager;
+		if (this.upgradeManager.canAdvance()) {
+			this.waveManager?.nextWave();
+			this.upgradeManager.reset();
 
+			this.paused = this.upgradeManager.showUpgradeMenu();
+		}
+
+		/*
+		let playerManager = this.playerManager;
 		if (playerManager) {
 			let timeSinceLastDamage = playerManager.smallestTimeSinceLastDamage();
 			if (timeSinceLastDamage < 150) {
@@ -397,12 +414,12 @@ export default class Game {
 			} else {
 				this.container.alpha = 1;
 			}
-		}
+		}*/
 
 		// if (Math.random() < deltaTime * 0.006) {
 		// 	this.enemyManager?.addEnemy();
 		// }
-		this.waveManager?.update(deltaTime);
+		if (this.playing) this.waveManager?.update(deltaTime);
 
 		const wave = this.waveManager?.getCurrentWave();
 		const waveUI = document.getElementById('wave');
@@ -411,9 +428,6 @@ export default class Game {
 		if (wave && !wave.isActive && waveText && this.playing) {
 			waveUI?.classList.remove('hidden');
 			waveText.innerText = `Wave ${wave.index + 1}`;
-
-			let counter = document.getElementById('counter');
-			if (counter) counter.innerText = (wave.index + 1).toString();
 		} else {
 			waveUI?.classList.add('hidden');
 		}
@@ -447,12 +461,12 @@ export default class Game {
 		// set inner text to "Game Over"
 		if (title) title.innerText = 'Game Over';
 
-		this.waveManager = new WaveManager(this, this.startWave);
+		this.waveManager = new WaveManager(this, -1);
 
 		let counter = document.getElementById('counter');
 		if (counter) counter.innerText = '';
 
-		this.upgradeManager.reset();
+		this.upgradeManager.resetAll();
 	}
 
 	handleKeyDown(e: KeyboardEvent) {

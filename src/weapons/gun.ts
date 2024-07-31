@@ -1,5 +1,5 @@
-import Game from './app';
-import { Projectile } from './projectile';
+import Game from '../app';
+import { Projectile } from '../projectile';
 
 import { sound } from '@pixi/sound';
 
@@ -18,9 +18,11 @@ export type WeaponOptions = {
 	showParticles?: boolean;
 
 	piercing?: number;
+
+	outline?: boolean;
 };
 
-export class Weapon {
+export class GunWeapon {
 	game: Game;
 
 	cooldown: number = 0;
@@ -41,6 +43,8 @@ export class Weapon {
 	showParticles: boolean = false;
 
 	piercing: number = 0;
+
+	outline: boolean = false;
 
 	constructor(game: Game, options: WeaponOptions | undefined = undefined) {
 		this.game = game;
@@ -63,6 +67,7 @@ export class Weapon {
 		if (options.showParticles !== undefined) this.showParticles = options.showParticles;
 
 		if (options.piercing) this.piercing = options.piercing;
+		if (options.outline) this.outline = options.outline;
 	}
 
 	fire(position: { x: number; y: number }, enemyPosition: { x: number; y: number }) {
@@ -78,7 +83,8 @@ export class Weapon {
 				collisionGroups: this.collisionGroups,
 				lifetime: this.lifetime,
 				showParticles: this.showParticles,
-				piercing: this.piercing
+				piercing: this.piercing,
+				outline: this.outline
 			});
 			this.cooldown = this.fireRate;
 

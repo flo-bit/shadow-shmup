@@ -1,3 +1,4 @@
+import { Vector2 } from '@dimforge/rapier2d';
 import Game from './app.js';
 import Enemy, { PentagonEnemy, SphereEnemy, TriangleEnemy } from './enemy.js';
 
@@ -7,6 +8,8 @@ export default class EnemyManager {
 	enemies: Enemy[] = [];
 
 	enemyTypes = [SphereEnemy, TriangleEnemy, PentagonEnemy];
+
+	point: Vector2 = new Vector2(0, 0);
 
 	constructor(game: Game) {
 		this.game = game;
@@ -20,6 +23,8 @@ export default class EnemyManager {
 	addEnemy(enemyType: typeof Enemy = this.randomEnemyType()) {
 		const enemy = new enemyType(this.game);
 		this.enemies.push(enemy);
+		
+		return enemy;
 	}
 
 	update(deltaTime: number) {
@@ -31,24 +36,51 @@ export default class EnemyManager {
 		});
 	}
 
-	getClosestEnemy(position: { x: number; y: number }, maxDist: number): Enemy | undefined {
-		let point = { x: position.x, y: -position.y };
+	getClosestEnemy(
+		position: { x: number; y: number },
+		maxDist: number,
+		output:
+			| {
+					enemy: Enemy | undefined;
+					distance: number;
+			  }
+			| undefined = undefined
+	): Enemy | undefined {
+		this.point.x = position.x;
+		this.point.y = -position.y;
+
 		let solid = true;
 
-		let proj = this.game.world.projectPoint(point, solid, undefined, 0x00020002);
+		let proj = this.game.world.projectPoint(this.point, solid, undefined, 0x00020002);
 
 		if (proj) {
 			let enemy = proj.collider.parent()?.userData as Enemy;
 
-			if (!enemy) return;
+			if (!enemy) {
+				if (output) {
+					output.enemy = undefined;
+					output.distance = 0;
+				}
+				return;
+			}
 
 			// check if enemy is within max distance
 			const dist = Math.sqrt((enemy.x - position.x) ** 2 + (enemy.y - position.y) ** 2);
 
 			if (dist < maxDist) {
+				if (output) {
+					output.enemy = enemy;
+					output.distance = dist;
+				}
 				return enemy;
 			}
 		}
+
+		if (output) {
+			output.enemy = undefined;
+			output.distance = 0;
+		}
+		return undefined;
 	}
 
 	killAll(dropItems: boolean = false) {

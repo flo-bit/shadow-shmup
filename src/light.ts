@@ -156,6 +156,8 @@ export class Light {
 
 		let firstPoint;
 
+		let hitPoint = { x: 0, y: 0 };
+
 		for (let i = 0; i < rays; i++) {
 			const angle = i * angleStep;
 
@@ -166,9 +168,12 @@ export class Light {
 
 			const hit = this.game.world.castRay(ray, rayLength, true, undefined, this.collisionGroups);
 
-			let hitPoint = hit
-				? ray.pointAt(hit.toi)
-				: { x: ray.dir.x * rayLength, y: ray.dir.y * rayLength };
+			if (hit) {
+				hitPoint = ray.pointAt(hit.toi);
+			} else {
+				hitPoint.x = ray.dir.x * rayLength;
+				hitPoint.y = ray.dir.y * rayLength;
+			}
 
 			let x = hitPoint.x - this.x;
 			let y = -hitPoint.y - this.y;
