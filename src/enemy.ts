@@ -86,7 +86,7 @@ export default class Enemy implements PlayerHit {
 		if (position) {
 			// create random direction vector
 			let point = { x: Math.random() - 0.5, y: Math.random() - 0.5 };
-			let length = 1000;
+			let length = 500;
 			let norm = Math.sqrt(point.x * point.x + point.y * point.y);
 			point.x = (point.x / norm) * length;
 			point.y = (point.y / norm) * length;

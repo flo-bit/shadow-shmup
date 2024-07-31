@@ -53,10 +53,11 @@ export class UpgradeManager {
 	}
 
 	addItem(item: Item) {
-		this.xp += item.value;
+		let value = item.value * 3;
+		this.xp += value;
 
 		// get percentage of needed:
-		const percentage = ((item.value / this.neededXP) * 100).toFixed(2);
+		const percentage = ((value / this.neededXP) * 100).toFixed(2);
 		// add to UI
 		if (this.xpUI) {
 			let itemUI = document.createElement('div');

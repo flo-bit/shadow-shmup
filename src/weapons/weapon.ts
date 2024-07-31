@@ -10,7 +10,7 @@ export class Weapon {
 
 	size: number = 10;
 
-	damage: number = 20;
+	damage: number = 10;
 
 	color: number;
 

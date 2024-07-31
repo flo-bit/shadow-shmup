@@ -9,11 +9,11 @@ import { Weapon } from './weapon';
  * triangle that spins and goes to left and right of player
  */
 export class Knife extends Weapon {
-	speed: number = 0.006;
-	distance: number = 300;
+	speed: number = 0.003;
+	distance: number = 150;
 	current: number = 0;
 
-	angle: number = 0;
+	angle: number = 1;
 
 	direction: 'left' | 'right' | 'both' = 'both';
 

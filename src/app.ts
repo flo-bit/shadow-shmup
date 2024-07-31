@@ -242,9 +242,6 @@ export default class Game {
 			this.startMusic();
 
 			this.playingTime = 0;
-
-			this.upgradeManager.showUpgradeMenu();
-			this.paused = true;
 		});
 
 		const playCoopButton = document.getElementById('play-coop');
@@ -318,7 +315,7 @@ export default class Game {
 			}
 
 			if (enemy && weapon) {
-				this.spawnParticles(weapon.x, weapon.y, 10, weapon.color);
+				this.spawnParticles(weapon.x, weapon.y, 50, weapon.color);
 
 				enemy.takeDamage(weapon.damage);
 

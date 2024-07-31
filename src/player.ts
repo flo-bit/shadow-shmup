@@ -92,14 +92,14 @@ export default class Player {
 
 		this.createHealthBar();
 
-		this.speed = 20000;
+		this.speed = 16000;
 		this.shape = shape;
 
 		this.weapon = new GunWeapon(this.game, {
 			color: this.color,
 			lifetime: 2000,
-			piercing: 0,
-			fireRate: 1000
+			piercing: 1,
+			fireRate: 800
 		});
 
 		this.isPlayer = true;

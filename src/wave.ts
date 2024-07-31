@@ -35,20 +35,26 @@ export class Wave {
 			this.isActive = true;
 		}
 
-		if (this.isActive) {
-			this.enemies.forEach((enemy, index) => {
-				this.spawnAccumulators[index] += deltaTimeSeconds;
-				const spawnInterval = 1 / enemy.spawnRate;
+		// if (this.isActive) {
+		this.enemies.forEach((enemy, index) => {
+			this.spawnAccumulators[index] += deltaTimeSeconds;
+			const spawnInterval = 1 / enemy.spawnRate;
 
-				while (this.spawnAccumulators[index] >= spawnInterval) {
-					if (!enemy.maxCount || this.enemyCounts[index] < enemy.maxCount) {
-						this.spawnEnemy(enemy.type);
-						this.enemyCounts[index]++;
-					}
-					this.spawnAccumulators[index] -= spawnInterval;
+			while (this.spawnAccumulators[index] >= spawnInterval) {
+				if (!enemy.maxCount || this.enemyCounts[index] < enemy.maxCount) {
+					let spawned = this.spawnEnemy(enemy.type);
+
+					// if (index === 0 && spawned) {
+					// 	// triple speed
+					// 	spawned.speed *= 3;
+					// }
+
+					this.enemyCounts[index]++;
 				}
-			});
-		}
+				this.spawnAccumulators[index] -= spawnInterval;
+			}
+		});
+		// }
 	}
 
 	spawnEnemy(enemyType: typeof Enemy) {
@@ -58,6 +64,7 @@ export class Wave {
 			const upgrades = this.game.waveManager?.getEnemyUpgrades(enemyType) ?? [];
 			upgrades.forEach((upgrade) => upgrade(enemy));
 		}
+		return enemy;
 	}
 }
 
@@ -139,36 +146,38 @@ export class WaveManager {
 
 // Example usage:
 const exampleWaves: WaveData[] = [
+	// wave 1
 	{
 		enemies: [
 			{
 				type: SphereEnemy,
 				spawnRate: 1,
 				upgradeFunction: (enemy) => {
-					enemy.health = 20;
-					enemy.value = 3;
+					enemy.health *= 1.8;
+					enemy.value *= 3;
 				}
 			},
 			{
 				type: TriangleEnemy,
 				spawnRate: 1,
 				upgradeFunction: (enemy) => {
-					enemy.speed *= 1.2;
-					enemy.value = 2;
+					enemy.speed *= 1.3;
+					enemy.value *= 2.5;
 				}
 			}
 		],
 		startDelay: 3,
 		neededItems: 10
 	},
+	// wave 2
 	{
 		enemies: [
 			{
 				type: SphereEnemy,
 				spawnRate: 1,
 				upgradeFunction: (enemy) => {
-					enemy.health = 30;
-					enemy.value += 1;
+					enemy.health *= 2;
+					enemy.value *= 2;
 					if (enemy instanceof SphereEnemy) {
 						enemy.burstNumber *= 1.3;
 					}
@@ -179,54 +188,63 @@ const exampleWaves: WaveData[] = [
 				spawnRate: 0.1,
 				upgradeFunction: (enemy) => {
 					if (enemy instanceof PentagonEnemy) {
-						enemy.weapon.fireRate *= 0.9;
+						enemy.weapon.fireRate *= 0.8;
 					}
+
+					enemy.value *= 3;
 				}
 			}
 		],
 		startDelay: 3,
 		neededItems: 20
 	},
+	// wave 3
 	{
 		enemies: [
 			{
 				type: PentagonEnemy,
 				spawnRate: 1,
 				upgradeFunction: (enemy) => {
-					enemy.health *= 1.5;
+					enemy.health *= 1.4;
+
+					enemy.value *= 2;
 				}
 			},
 			{
 				type: TriangleEnemy,
 				spawnRate: 2,
 				upgradeFunction: (enemy) => {
-					enemy.speed *= 1.1;
-					enemy.value *= 1.5;
+					enemy.speed *= 1.3;
+
+					enemy.value *= 3;
 				}
 			}
 		],
 		startDelay: 3,
 		neededItems: 50
 	},
+	// wave 4
 	{
 		enemies: [
 			{
 				type: SphereEnemy,
-				spawnRate: 3,
+				spawnRate: 0.6,
 				upgradeFunction: (enemy) => {
-					enemy.value *= 1.5;
+					enemy.value *= 3;
+
 					if (enemy instanceof SphereEnemy) {
-						enemy.weapon.damage *= 1.5;
+						enemy.weapon.damage *= 2;
 						enemy.burstNumber *= 1.5;
-						if(enemy.weapon.lifetime) enemy.weapon.lifetime *= 1.5;
+						if (enemy.weapon.lifetime) enemy.weapon.lifetime *= 1.5;
 					}
 				}
 			},
 			{
 				type: TriangleEnemy,
-				spawnRate: 3,
+				spawnRate: 0.6,
 				upgradeFunction: (enemy) => {
-					enemy.value *= 1.5;
+					enemy.value *= 2;
+
 					enemy.speed *= 1.2;
 					if (enemy instanceof TriangleEnemy) {
 						enemy.projectile.damage *= 2;
@@ -235,9 +253,29 @@ const exampleWaves: WaveData[] = [
 			},
 			{
 				type: PentagonEnemy,
-				spawnRate: 3,
+				spawnRate: 0.6,
 				upgradeFunction: (enemy) => {
-					enemy.value *= 1.5;
+					enemy.value *= 3;
+
+					if (enemy instanceof PentagonEnemy) {
+						enemy.weapon.damage *= 2;
+						enemy.health *= 1.5;
+					}
+				}
+			}
+		],
+		startDelay: 3,
+		neededItems: 100
+	},
+	// wave 5
+	{
+		enemies: [
+			{
+				type: PentagonEnemy,
+				spawnRate: 1,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 4;
+
 					if (enemy instanceof PentagonEnemy) {
 						enemy.weapon.damage *= 1.5;
 					}
@@ -245,6 +283,284 @@ const exampleWaves: WaveData[] = [
 			}
 		],
 		startDelay: 3,
-		neededItems: 100
+		neededItems: 300
+	},
+	// wave 6
+	{
+		enemies: [
+			{
+				type: TriangleEnemy,
+				spawnRate: 3,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 4;
+
+					if (enemy instanceof TriangleEnemy) {
+						enemy.speed *= 1.5;
+						enemy.projectile.damage *= 2;
+						enemy.health *= 1.7;
+					}
+				}
+			}
+		],
+		startDelay: 3,
+		neededItems: 500
+	},
+	// wave 7
+	{
+		enemies: [
+			{
+				type: SphereEnemy,
+				spawnRate: 3,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 3;
+
+					if (enemy instanceof SphereEnemy) {
+						enemy.speed *= 1.5;
+						enemy.health *= 1.2;
+						enemy.burstNumber *= 1.5;
+						enemy.weapon.damage *= 1.5;
+					}
+				}
+			}
+		],
+		startDelay: 3,
+		neededItems: 1000
+	},
+	// wave 8
+	{
+		enemies: [
+			{
+				type: SphereEnemy,
+				spawnRate: 2,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 3;
+
+					if (enemy instanceof SphereEnemy) {
+						enemy.speed *= 1.5;
+						enemy.health *= 1.2;
+						enemy.burstNumber *= 1.5;
+						enemy.weapon.damage *= 1.5;
+					}
+				}
+			},
+			{
+				type: PentagonEnemy,
+				spawnRate: 2,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 3;
+
+					if (enemy instanceof PentagonEnemy) {
+						enemy.speed *= 1.5;
+						enemy.health *= 1.2;
+						enemy.weapon.damage *= 1.5;
+						enemy.weapon.fireRate *= 0.8;
+					}
+				}
+			}
+		],
+		startDelay: 3,
+		neededItems: 2000
+	},
+	// wave 9
+	{
+		enemies: [
+			{
+				type: SphereEnemy,
+				spawnRate: 2,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 4;
+
+					if (enemy instanceof SphereEnemy) {
+						enemy.speed *= 2;
+						enemy.health *= 1.4;
+					}
+				}
+			}
+		],
+		startDelay: 3,
+		neededItems: 4000
+	},
+	// wave 10
+	{
+		enemies: [
+			{
+				type: TriangleEnemy,
+				spawnRate: 4,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 3;
+
+					if (enemy instanceof SphereEnemy) {
+						enemy.speed *= 1.5;
+						enemy.health *= 1.5;
+					}
+				}
+			}
+		],
+		startDelay: 3,
+		neededItems: 10000
+	},
+	// wave 11
+	{
+		enemies: [
+			{
+				type: PentagonEnemy,
+				spawnRate: 4,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 5;
+
+					if (enemy instanceof SphereEnemy) {
+						enemy.speed *= 1.5;
+						enemy.health *= 1.3;
+						enemy.weapon.damage *= 2;
+					}
+				}
+			}
+		],
+		startDelay: 3,
+		neededItems: 20000
+	},
+	// wave 12
+	{
+		enemies: [
+			{
+				type: TriangleEnemy,
+				spawnRate: 3,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 3;
+
+					if (enemy instanceof TriangleEnemy) {
+						enemy.speed *= 2;
+						enemy.health *= 1.2;
+					}
+				}
+			},
+			{
+				type: SphereEnemy,
+				spawnRate: 3,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 4;
+
+					if (enemy instanceof SphereEnemy) {
+						enemy.weapon.damage *= 1.5;
+						enemy.health *= 1.5;
+						enemy.burstNumber *= 1.5;
+					}
+				}
+			}
+		],
+		startDelay: 3,
+		neededItems: 40000
+	},
+	// wave 13
+	{
+		enemies: [
+			{
+				type: TriangleEnemy,
+				spawnRate: 3,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 3;
+
+					if (enemy instanceof TriangleEnemy) {
+						enemy.speed *= 2;
+						enemy.health *= 1.2;
+					}
+				}
+			},
+			{
+				type: SphereEnemy,
+				spawnRate: 3,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 4;
+
+					if (enemy instanceof SphereEnemy) {
+						enemy.weapon.damage *= 1.5;
+						enemy.health *= 2;
+						enemy.burstNumber *= 1.5;
+					}
+				}
+			},
+			{
+				type: PentagonEnemy,
+				spawnRate: 4,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 5;
+
+					if (enemy instanceof SphereEnemy) {
+						enemy.speed *= 1.5;
+						enemy.health *= 2;
+						enemy.weapon.fireRate *= 0.6;
+						enemy.weapon.damage *= 2;
+					}
+				}
+			}
+		],
+		startDelay: 3,
+		neededItems: 80000
+	},
+	// wave 14
+	{
+		enemies: [
+			{
+				type: TriangleEnemy,
+				spawnRate: 5,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 3;
+
+					if (enemy instanceof TriangleEnemy) {
+						enemy.speed *= 2;
+						enemy.health *= 1.2;
+					}
+				}
+			},
+			{
+				type: SphereEnemy,
+				spawnRate: 5,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 4;
+
+					if (enemy instanceof SphereEnemy) {
+						enemy.weapon.damage *= 1.5;
+						enemy.health *= 1.5;
+						enemy.burstNumber *= 1.5;
+					}
+				}
+			},
+			{
+				type: PentagonEnemy,
+				spawnRate: 3,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 3;
+
+					if (enemy instanceof SphereEnemy) {
+						enemy.speed *= 1.5;
+						enemy.health *= 2;
+						enemy.weapon.fireRate *= 0.6;
+						enemy.weapon.damage *= 2;
+					}
+				}
+			}
+		],
+		startDelay: 3,
+		neededItems: 80000
+	},
+	// wave 15
+	{
+		enemies: [
+			{
+				type: SphereEnemy,
+				spawnRate: 8,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 4;
+
+					if (enemy instanceof SphereEnemy) {
+						enemy.weapon.damage *= 1.5;
+						enemy.health *= 1.5;
+						enemy.burstNumber *= 1.5;
+					}
+				}
+			}
+		],
+		startDelay: 3,
+		neededItems: 100000
 	}
 ];

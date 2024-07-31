@@ -9,8 +9,8 @@ import { Weapon } from './weapon';
  * ball that flies in a circle around player
  */
 export class BallWeapon extends Weapon {
-	distance: number = 200;
-	speed: number = 0.001;
+	distance: number = 100;
+	speed: number = 0.002;
 	angle: number = 0;
 
 	constructor(game: Game, color: number) {
