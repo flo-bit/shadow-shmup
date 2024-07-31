@@ -92,6 +92,13 @@ export default class Game {
 		});
 		sound.add('music', { url: './music.mp3', loop: true, volume: 0.3 });
 		sound.add('laser', { url: './laser.mp3', volume: 0.1 });
+
+		sound.add('impact', { url: './impact2.mp3', volume: 0.5 });
+		sound.add('hit', { url: './impact4.mp3', volume: 0.08 });
+
+		sound.add('shmup-solo', { url: './shmup-solo.mp3', volume: 0.5 });
+		sound.add('shmup-coop', { url: './shmup-coop.mp3', volume: 0.5 });
+		sound.add('coin', { url: './coin.mp3', volume: 0.1 });
 	}
 
 	async setupPhysicsWorld() {
@@ -242,6 +249,8 @@ export default class Game {
 			this.startMusic();
 
 			this.playingTime = 0;
+
+			sound.play('shmup-solo');
 		});
 
 		const playCoopButton = document.getElementById('play-coop');
@@ -256,6 +265,8 @@ export default class Game {
 			this.startMusic();
 
 			this.playingTime = 0;
+
+			sound.play('shmup-coop');
 		});
 	}
 
@@ -331,10 +342,14 @@ export default class Game {
 
 				player.takeDamage(projectile.damage);
 				projectile.destroy();
+
+				sound.play('impact');
 			}
 
 			if (player && item) {
 				item.pickup(player);
+
+				// sound.play('coin');
 			}
 
 			if (projectile) {

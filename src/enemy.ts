@@ -6,7 +6,7 @@ import Eye from './eye';
 import Player from './player';
 import { GunWeapon } from './weapons/gun';
 import { Projectile } from './projectile';
-import { Light } from './light';
+import { sound } from '@pixi/sound';
 
 interface PlayerHit {
 	hitPlayer?(player: Player): void;
@@ -280,6 +280,8 @@ export default class Enemy implements PlayerHit {
 		if (this.health <= 0) {
 			this.destroy();
 		}
+
+		sound.play('hit');
 	}
 }
 
