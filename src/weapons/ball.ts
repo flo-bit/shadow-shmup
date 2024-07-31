@@ -10,7 +10,7 @@ import { Weapon } from './weapon';
  */
 export class BallWeapon extends Weapon {
 	distance: number = 200;
-	speed: number = 0.002;
+	speed: number = 0.001;
 	angle: number = 0;
 
 	constructor(game: Game, color: number) {
@@ -56,6 +56,18 @@ export class BallWeapon extends Weapon {
 	set y(value: number) {
 		if (this.shape) this.shape.y = value;
 		this.rigidBody?.setTranslation({ x: this.shape?.x ?? 0, y: -value }, true);
+	}
+
+	get x() {
+		if (this.shape) return this.shape.x;
+
+		return this.rigidBody?.translation().x ?? 0;
+	}
+
+	get y() {
+		if (this.shape) return this.shape.y;
+
+		return -(this.rigidBody?.translation().y ?? 0);
 	}
 
 	update(deltaTime: number, x: number, y: number) {

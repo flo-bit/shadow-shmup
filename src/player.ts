@@ -23,8 +23,8 @@ export default class Player {
 
 	size: number;
 
-	maxHealth: number;
-	health: number;
+	_maxHealth: number;
+	_health: number;
 
 	playerContainer: PIXI.Container;
 
@@ -67,8 +67,8 @@ export default class Player {
 
 		this.size = 25;
 
-		this.maxHealth = 100;
-		this.health = this.maxHealth;
+		this._maxHealth = 100;
+		this._health = this._maxHealth;
 
 		this.color = num === 0 ? 0xbe123c : 0x4f46e5;
 
@@ -94,7 +94,7 @@ export default class Player {
 		this.weapon = new GunWeapon(this.game, {
 			color: this.color,
 			lifetime: 2000,
-			piercing: 1,
+			piercing: 0,
 			fireRate: 1000
 		});
 
@@ -122,6 +122,22 @@ export default class Player {
 
 		//this.weapons = [];
 		//this.weapons = [new BallWeapon(this.game, this.color), new Knife(this.game, this.color)];
+	}
+
+	set health(value: number) {
+		this._health = value;
+		if (this.healthBar) this.healthBar.width = this.size * (this._health / this._maxHealth);
+	}
+	get health() {
+		return this._health;
+	}
+
+	set maxHealth(value: number) {
+		this._maxHealth = value;
+		if (this.healthBar) this.healthBar.width = this.size * (this._health / this._maxHealth);
+	}
+	get maxHealth() {
+		return this._maxHealth;
 	}
 
 	createHealthBar() {
@@ -225,7 +241,7 @@ export default class Player {
 				this.y = closestPlayer?.y ?? 0;
 
 				this.dead = false;
-				this.health = this.maxHealth;
+				this._health = this._maxHealth;
 
 				this.playerContainer.alpha = 1;
 			}
@@ -272,14 +288,13 @@ export default class Player {
 
 		this.health -= amount;
 
-		this.game.controls.rumble(this.num, (amount / this.maxHealth) * 50);
+		this.game.controls.rumble(this.num, (amount / this._maxHealth) * 50);
 
 		if (this.health < 0) {
 			this.health = 0;
 			this.dead = true;
 			this.respawnTime = 5000;
 		}
-		if (this.healthBar) this.healthBar.width = this.size * (this.health / this.maxHealth);
 
 		this.timeSinceLastDamage = 0;
 	}

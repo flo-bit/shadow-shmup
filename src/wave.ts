@@ -102,8 +102,7 @@ export class WaveManager {
 			this.collectEnemyUpgrades();
 
 			this.currentWave++;
-			this.game.upgradeManager.neededItems = this.data[this.currentWave].neededItems;
-			console.log('Starting wave', this.currentWave, this.game.upgradeManager.neededItems);
+			this.game.upgradeManager.neededXP = this.data[this.currentWave].neededItems;
 		}
 	}
 
@@ -143,7 +142,7 @@ const exampleWaves: WaveData[] = [
 	{
 		enemies: [
 			{
-				type: PentagonEnemy,
+				type: SphereEnemy,
 				spawnRate: 1,
 				upgradeFunction: (enemy) => {
 					enemy.health = 20;
@@ -154,12 +153,13 @@ const exampleWaves: WaveData[] = [
 				type: TriangleEnemy,
 				spawnRate: 1,
 				upgradeFunction: (enemy) => {
-					enemy.speed *= 1.5;
+					enemy.speed *= 1.2;
+					enemy.value = 2;
 				}
 			}
 		],
 		startDelay: 3,
-		neededItems: 4
+		neededItems: 10
 	},
 	{
 		enemies: [
@@ -168,6 +168,10 @@ const exampleWaves: WaveData[] = [
 				spawnRate: 1,
 				upgradeFunction: (enemy) => {
 					enemy.health = 30;
+					enemy.value += 1;
+					if (enemy instanceof SphereEnemy) {
+						enemy.burstNumber *= 1.3;
+					}
 				}
 			},
 			{
@@ -175,7 +179,7 @@ const exampleWaves: WaveData[] = [
 				spawnRate: 0.1,
 				upgradeFunction: (enemy) => {
 					if (enemy instanceof PentagonEnemy) {
-						enemy.weapon.fireRate = 1000;
+						enemy.weapon.fireRate *= 0.9;
 					}
 				}
 			}
@@ -189,21 +193,35 @@ const exampleWaves: WaveData[] = [
 				type: PentagonEnemy,
 				spawnRate: 1,
 				upgradeFunction: (enemy) => {
-					if (enemy instanceof PentagonEnemy) {
-						enemy.weapon.fireRate = 100;
-					}
+					enemy.health *= 1.5;
 				}
 			},
 			{
 				type: TriangleEnemy,
 				spawnRate: 2,
 				upgradeFunction: (enemy) => {
-					enemy.speed *= 1.05;
+					enemy.speed *= 1.1;
+					enemy.value *= 1.5;
+				}
+			}
+		],
+		startDelay: 3,
+		neededItems: 50
+	},
+	{
+		enemies: [
+			{
+				type: SphereEnemy,
+				spawnRate: 3,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 1.5;
+					if (enemy instanceof SphereEnemy) {
+						enemy.weapon.damage *= 1.5;
+					}
 				}
 			}
 		],
 		startDelay: 3,
 		neededItems: 100
 	}
-	// Add more waves as needed
 ];

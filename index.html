@@ -7,7 +7,6 @@
 		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
 		<meta name="apple-mobile-web-app-title" content="shadow shooter" />
 
-
 		<link rel="icon" href="/icons/favicon.ico" sizes="32x32" />
 		<link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
 		<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -173,19 +172,23 @@
 			<div id="wave-text" class="text-8xl font-bold text-neutral-200">Wave</div>
 		</div>
 
-		<div id="items" class="absolute top-0 left-0 right-0 h-1 w-full flex">
+		<div id="xp" class="absolute top-0 left-0 right-0 h-1 w-full flex"></div>
 
-		</div>
+		<div
+			id="upgrades"
+			class="hidden z-40 absolute inset-0 overflow-y-scroll py-16 sm:py-16 px-2 bg-black/90"
+		>
+			<div class="mx-auto max-w-5xl text-white text-4xl mb-8 font-bold">Choose your upgrade</div>
 
-		<div id="upgrades" class="hidden z-50 absolute inset-0 overflow-y-scroll py-2 sm:py-16 px-2 bg-black/70">
 			<div
-			id="upgrades-container"
+				id="upgrades-container"
 				class="overflow-hidden rounded-lg bg-white/5 mx-auto max-w-5xl backdrop-blur-sm shadow sm:grid sm:grid-cols-2"
-			>
-				
-			</div>
+			></div>
 		</div>
 
-		<div id="items" class="absolute bottom-1 right-3 text-white font-bold text-xl flex flex-col gap-1"></div>
+		<div id="coins" class="absolute top-3 right-3 text-white font-bold text-xl z-50 flex items-center gap-2">
+
+		</div>
+
 	</body>
 </html>

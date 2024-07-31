@@ -59,6 +59,8 @@ export default class Game {
 
 	playing: boolean = false;
 
+	paused: boolean = false;
+
 	controls: Controls;
 
 	scale: number = 1;
@@ -90,29 +92,6 @@ export default class Game {
 		});
 		sound.add('music', { url: './music.mp3', loop: true, volume: 0.3 });
 		sound.add('laser', { url: './laser.mp3', volume: 0.1 });
-
-		// get upgrade-container
-		const upgradeContainer = document.getElementById('upgrades-container');
-		// if upgradeContainer exists
-		if (upgradeContainer) {
-			for (let i = 0; i < 6; i++) {
-				let option = addUpgradeOption({
-					index: i,
-					total: 6,
-					iconName: 'heart',
-					perk: 'Health',
-					perkValue: '+10%',
-					minusStat: 'Speed',
-					minusStatValue: '-0.1',
-					price: [
-						{ color: 'bg-orange-400', amount: Math.floor(Math.random() * 10 + 1) },
-						{ color: 'bg-sky-400', amount: Math.floor(Math.random() * 10 + 1) }
-					],
-					empty: i == 5
-				});
-				upgradeContainer.appendChild(option);
-			}
-		}
 	}
 
 	async setupPhysicsWorld() {
@@ -198,6 +177,7 @@ export default class Game {
 		this.mainContainer.addChild(noise);
 
 		app.ticker.add((ticker) => {
+			if (this.paused) return;
 			if (this.stats) this.stats.begin();
 
 			// get ellapsed time
@@ -262,6 +242,9 @@ export default class Game {
 			this.startMusic();
 
 			this.playingTime = 0;
+
+			this.upgradeManager.showUpgradeMenu();
+			this.paused = true;
 		});
 
 		const playCoopButton = document.getElementById('play-coop');
@@ -338,6 +321,8 @@ export default class Game {
 				this.spawnParticles(weapon.x, weapon.y, 10, weapon.color);
 
 				enemy.takeDamage(weapon.damage);
+
+				console.log('enemy hit');
 			}
 
 			if (enemy && player && enemy.hitPlayer) {
@@ -362,6 +347,7 @@ export default class Game {
 	}
 
 	spawnParticles(x: number, y: number, num: number, color: number = 0xffffff) {
+		console.log('spawn particles', x, y, num, color);
 		for (let i = 0; i < num; i++) {
 			this.particleSystem?.createParticle(
 				x,
@@ -396,13 +382,15 @@ export default class Game {
 
 		if (this.invincible) {
 			for (let players of this.playerManager?.players ?? []) {
-				players.health = players.maxHealth;
+				players.health = players._maxHealth;
 			}
 		}
 
-		if (this.upgradeManager.items >= this.upgradeManager.neededItems) {
+		if (this.upgradeManager.canAdvance()) {
 			this.waveManager?.nextWave();
 			this.upgradeManager.reset();
+
+			this.paused = this.upgradeManager.showUpgradeMenu();
 		}
 
 		/*
@@ -466,7 +454,7 @@ export default class Game {
 		let counter = document.getElementById('counter');
 		if (counter) counter.innerText = '';
 
-		this.upgradeManager.reset();
+		this.upgradeManager.resetAll();
 	}
 
 	handleKeyDown(e: KeyboardEvent) {

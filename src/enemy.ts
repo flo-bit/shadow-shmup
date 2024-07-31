@@ -297,6 +297,8 @@ export class SphereEnemy extends Enemy {
 
 	shooting: boolean = false;
 
+	burstNumber: number = 10;
+
 	constructor(game: Game) {
 		super(game);
 
@@ -346,10 +348,10 @@ export class SphereEnemy extends Enemy {
 		}
 
 		if (this.shooting && this.cooldown <= 0 && this.weapon.cooldown <= 0) {
-			for (let i = 0; i < 20; i++) {
+			for (let i = 0; i < this.burstNumber; i++) {
 				this.weapon.cooldown = -1;
 				// get angle
-				let angle = (Math.PI / 10) * i;
+				let angle = (Math.PI / this.burstNumber) * 2 * i;
 				let x = Math.cos(angle) + this.position.x;
 				let y = Math.sin(angle) + this.position.y;
 				this.weapon.fire(this.position, { x, y });
@@ -487,11 +489,10 @@ export class PentagonEnemy extends Enemy {
 			color: this.color,
 			collisionGroups: 0x00100001,
 			projectileSpeed: 0.15,
-			fireRate: 2000,
+			fireRate: 5000,
 			projectileSize: 12,
 			damage: 10,
-			lifetime: 8000,
-			outline: true
+			lifetime: 4000
 		});
 
 		this.speed = 900;

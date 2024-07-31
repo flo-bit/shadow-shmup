@@ -42,7 +42,7 @@ export class Item {
 		this.game = game;
 
 		this.size = options.size;
-		this.color = options.color;
+		this.color = 0xf59e0b; //options.color;
 
 		this.type = options.type;
 
