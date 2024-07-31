@@ -24,8 +24,6 @@ export default class Enemy implements PlayerHit {
 
 	healthBar?: PIXI.Graphics;
 
-	damage: number = 10;
-
 	speed: number = 500;
 
 	shape?: PIXI.Graphics;
@@ -598,7 +596,7 @@ export class CrossEnemy extends Enemy {
 	}
 
 	createEyes() {
-		this.size = 500;
+		this.size = 100;
 		this.color = 0x0284c7;
 		this.eyes = new PIXI.Container();
 		this.enemyContainer.addChild(this.eyes);

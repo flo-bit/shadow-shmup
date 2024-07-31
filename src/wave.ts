@@ -217,6 +217,29 @@ const exampleWaves: WaveData[] = [
 					enemy.value *= 1.5;
 					if (enemy instanceof SphereEnemy) {
 						enemy.weapon.damage *= 1.5;
+						enemy.burstNumber *= 1.5;
+						if(enemy.weapon.lifetime) enemy.weapon.lifetime *= 1.5;
+					}
+				}
+			},
+			{
+				type: TriangleEnemy,
+				spawnRate: 3,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 1.5;
+					enemy.speed *= 1.2;
+					if (enemy instanceof TriangleEnemy) {
+						enemy.projectile.damage *= 2;
+					}
+				}
+			},
+			{
+				type: PentagonEnemy,
+				spawnRate: 3,
+				upgradeFunction: (enemy) => {
+					enemy.value *= 1.5;
+					if (enemy instanceof PentagonEnemy) {
+						enemy.weapon.damage *= 1.5;
 					}
 				}
 			}

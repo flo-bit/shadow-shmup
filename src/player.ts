@@ -61,6 +61,10 @@ export default class Player {
 
 	weapons: Weapon[] = [];
 
+	shootingRange: number = 200;
+
+	coinMagnetRange: number = 80;
+
 	constructor(game: Game, num: number) {
 		this.game = game;
 		this.num = num;
@@ -260,7 +264,7 @@ export default class Player {
 		this.rightEye.update(deltaTime, 1);
 
 		// get closest enemy
-		const closestEnemy = this.game.enemyManager?.getClosestEnemy(this.position, 200);
+		const closestEnemy = this.game.enemyManager?.getClosestEnemy(this.position, this.shootingRange);
 
 		if (closestEnemy) {
 			this.weapon.fire(this.position, closestEnemy.position);

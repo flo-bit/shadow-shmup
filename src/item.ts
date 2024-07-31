@@ -150,7 +150,7 @@ export class Item {
 			let dist = Math.hypot(dx, dy);
 
 			// move towards player
-			if (dist < 80) {
+			if (dist < closestPlayer.coinMagnetRange) {
 				let speed = 0.4;
 				this.x += (dx / dist) * speed * deltaTime;
 				this.y += (dy / dist) * speed * deltaTime;
