@@ -5,11 +5,11 @@ import { type World, EventQueue } from '@dimforge/rapier2d';
 import { RAPIER } from './rapier.js';
 import ParticleSystem from './particles.js';
 import { Projectile } from './projectile.js';
-import Enemy, { CrossEnemy } from './enemy.js';
+import Enemy from './enemy.js';
 
 import Stats from 'stats.js';
 
-import { AdvancedBloomFilter, OldFilmFilter } from 'pixi-filters';
+import { AdvancedBloomFilter } from 'pixi-filters';
 import PlayerManager from './player-manager.js';
 import ProjectileManager, { ProjectileData } from './projectile-manager.js';
 
@@ -21,9 +21,7 @@ import { Item, ItemOptions } from './item.js';
 import { ItemManager } from './item-manager.js';
 import { LightManager } from './light-manager.js';
 import { createNoiseSprite } from './helper.js';
-import { addUpgradeOption } from './upgrades.js';
 import { UpgradeManager } from './upgrade-manager.js';
-import { BallWeapon } from './weapons/ball.js';
 import { Weapon } from './weapons/weapon.js';
 
 export default class Game {
@@ -62,6 +60,8 @@ export default class Game {
 	paused: boolean = false;
 
 	controls: Controls;
+
+	scaleMultiplier: number = 1;
 
 	scale: number = 1;
 
@@ -165,7 +165,7 @@ export default class Game {
 		this.mainContainer.position.set(window.innerWidth / 2, window.innerHeight / 2);
 		// scale the container
 		this.scale = Math.min(window.innerWidth / this.minWidth, window.innerHeight / this.minHeight);
-		this.mainContainer.scale.set(this.scale);
+		this.mainContainer.scale.set(this.scale * this.scaleMultiplier);
 
 		// add a resize event listener
 		window.addEventListener('resize', () => {
@@ -173,7 +173,7 @@ export default class Game {
 
 			this.mainContainer.position.set(window.innerWidth / 2, window.innerHeight / 2);
 			this.scale = Math.min(window.innerWidth / this.minWidth, window.innerHeight / this.minHeight);
-			this.mainContainer.scale.set(this.scale);
+			this.mainContainer.scale.set(this.scale * this.scaleMultiplier);
 		});
 
 		let noise = createNoiseSprite(2000, 2000);
@@ -212,9 +212,6 @@ export default class Game {
 
 				this.container.x += (position.x - this.container.x) * interpolationFactor;
 				this.container.y += (position.y - this.container.y) * interpolationFactor;
-
-				// this.container.x = position.x;
-				// this.container.y = position.y;
 			}
 
 			if (this.stats) this.stats.end();

@@ -2,27 +2,58 @@
 
 The shadows are coming for you! Can you survive the onslaught? Move with WASD, auto-fires nearest enemy.
 
+## sounds
+
+- gun shooting
+- knife sound
+- chainsaw sound
+
+- player getting hit
+- enemy getting hit
+- player dying
+
+- enemy shooting
+- enemy exploding
+- enemy dying
+
+- collecting coins
+- collecting powerup
+
+- click (selecting upgrade)
+- level up
+
+
 ## TODO
 
-- [ ] sound effects
-    - [x] player shooting
+- [ ] stats
+    - [ ] count kills, deaths, damage taken, damage dealt
+    - [ ] show stats at end of game
+- [ ] tutorial
+- [ ] move wave counter to top right corner
+- [ ] 
+- [ ] different players
+    - [ ] different weapons
+    - [ ] different shapes
+    - [ ] different stats
+- [ ] sound effects (change to own recorded sounds)
+    - [ ] player shooting
     - [ ] player getting hit
     - [ ] player dying
     - [ ] enemy getting hit
     - [ ] enemy shooting
     - [ ] enemy dying
 - [ ] special effects
-    - [ ] player getting hit (flash screen -> change to something else)
-- [ ] player upgrades (all upgrades use potions, and have one positive and one negative effect)
-    - weapon fire rate
-    - weapon shooting distance
+    - [ ] player getting hit (red vignette)
+- [x] player upgrades
+    - [x] weapon fire rate
+    - [x] weapon shooting distance
 
-    - bullet speed
-    - bullet damage
-    - bullet piercing
+    - [x] bullet speed
+    - [x] bullet damage
+    - [x] bullet piercing
 
-    - movement speed
-    - player health
+    - [x] movement speed
+    - [x] player health
     - items stay longer
 - [ ] powerups
     - [ ] randomly spawn (with some chance in each cell)
@@ -38,7 +69,7 @@ The shadows are coming for you! Can you survive the onslaught? Move with WASD, a
         - [ ] items stay as long as powerup is active
         - [ ] item magnet
         - [ ] get all items
-- [ ] enemy upgrades (some enemies are upgraded every wave)
+- [x] enemy upgrades (some enemies are upgraded every wave)
     - damage
     - speed
     - health
@@ -46,10 +77,6 @@ The shadows are coming for you! Can you survive the onslaught? Move with WASD, a
     - bullet speed
     - bullet count
     - fire rate
-- [ ] stats
-    - [ ] count kills, deaths, damage taken, damage dealt
-    - [ ] show stats at end of game
-- [ ] tutorial
 - weapons
     - recoil on player
     - [x] impulse on bullet impact (done for enemies)

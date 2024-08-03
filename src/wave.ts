@@ -562,5 +562,26 @@ const exampleWaves: WaveData[] = [
 		],
 		startDelay: 3,
 		neededItems: 100000
+	}, // wave 15
+	{
+		enemies: [
+			{
+				type: SphereEnemy,
+				spawnRate: 8,
+				upgradeFunction: (enemy) => {}
+			},
+			{
+				type: TriangleEnemy,
+				spawnRate: 8,
+				upgradeFunction: (enemy) => {}
+			},
+			{
+				type: PentagonEnemy,
+				spawnRate: 8,
+				upgradeFunction: (enemy) => {}
+			}
+		],
+		startDelay: 3,
+		neededItems: 1000000000
 	}
 ];

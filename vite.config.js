@@ -7,6 +7,6 @@ export default defineConfig({
 	build: {
 		target: 'esnext'
 	},
-	base: '/shadow-shmup/' // for github deployment
-	//base: '' // for itch.io deployment
+	//base: '/shadow-shmup/' // for github deployment
+	base: '' // for itch.io deployment
 });
