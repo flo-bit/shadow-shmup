@@ -1,5 +1,9 @@
 import Game from './app';
-import Enemy, { PentagonEnemy, SphereEnemy, TriangleEnemy } from './enemies/enemy';
+import Enemy from './enemies/enemy';
+
+import { PentagonEnemy } from './enemies/pentagon-enemies';
+import { SphereEnemy } from './enemies/sphere-enemies';
+import { TriangleEnemy } from './enemies/triangle-enemies';
 
 type EnemySpawnConfig = {
 	type: typeof Enemy;
@@ -35,26 +39,19 @@ export class Wave {
 			this.isActive = true;
 		}
 
-		// if (this.isActive) {
 		this.enemies.forEach((enemy, index) => {
 			this.spawnAccumulators[index] += deltaTimeSeconds;
 			const spawnInterval = 1 / enemy.spawnRate;
 
 			while (this.spawnAccumulators[index] >= spawnInterval) {
 				if (!enemy.maxCount || this.enemyCounts[index] < enemy.maxCount) {
-					let spawned = this.spawnEnemy(enemy.type);
-
-					// if (index === 0 && spawned) {
-					// 	// triple speed
-					// 	spawned.speed *= 3;
-					// }
+					this.spawnEnemy(enemy.type);
 
 					this.enemyCounts[index]++;
 				}
 				this.spawnAccumulators[index] -= spawnInterval;
 			}
 		});
-		// }
 	}
 
 	spawnEnemy(enemyType: typeof Enemy) {

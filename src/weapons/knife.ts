@@ -1,8 +1,6 @@
 import Game from '../app';
-import { Light } from '../light';
 import * as PIXI from 'pixi.js';
 import { RAPIER } from '../helper/rapier';
-import { Collider, RigidBody, Vector2 } from '@dimforge/rapier2d';
 import { Weapon } from './weapon';
 
 /**
@@ -16,6 +14,8 @@ export class Knife extends Weapon {
 	angle: number = 1;
 
 	direction: 'left' | 'right' | 'both' = 'both';
+
+	name: string = 'knife';
 
 	constructor(game: Game, color: number) {
 		super(game, color);

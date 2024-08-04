@@ -1,6 +1,10 @@
 import { Vector2 } from '@dimforge/rapier2d';
 import Game from '../app.js';
-import Enemy, { PentagonEnemy, SphereEnemy, TriangleEnemy } from './enemy.js';
+import Enemy from './enemy.js';
+
+import { SphereEnemy } from './sphere-enemies.js';
+import { TriangleEnemy } from './triangle-enemies.js';
+import { PentagonEnemy } from './pentagon-enemies.js';
 
 export default class EnemyManager {
 	game: Game;

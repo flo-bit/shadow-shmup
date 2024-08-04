@@ -1,5 +1,4 @@
 import Game from '../app';
-import { Light } from '../light';
 import * as PIXI from 'pixi.js';
 import { RAPIER } from '../helper/rapier';
 import { Collider, RigidBody } from '@dimforge/rapier2d';
@@ -14,6 +13,8 @@ export class BurstWeapon extends Weapon {
 	fireRate: number = 1000;
 
 	gun: GunWeapon;
+
+	name: string = 'burst';
 
 	constructor(game: Game, color: number) {
 		super(game, color);

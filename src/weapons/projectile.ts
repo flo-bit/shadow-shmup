@@ -15,6 +15,8 @@ export class Projectile {
 	destroyed: boolean = false;
 	color: number;
 
+	name: string = 'projectile';
+
 	isProjectile: true;
 
 	lifetime: number | undefined = undefined;

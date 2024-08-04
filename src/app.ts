@@ -25,6 +25,7 @@ import { LightManager } from './visuals/light-manager.js';
 import { createNoiseSprite } from './helper/helper.js';
 import { UpgradeManager } from './upgrades/upgrade-manager.js';
 import { Weapon } from './weapons/weapon.js';
+import { TextManager } from './visuals/text-manager.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -50,6 +51,8 @@ export default class Game {
 	particleSystem?: ParticleSystem;
 
 	obstacleManager: ObstacleManager;
+
+	textManager: TextManager;
 
 	debug: boolean = false;
 
@@ -87,26 +90,21 @@ export default class Game {
 		this.itemManager = new ItemManager(this);
 		this.lightManager = new LightManager(this);
 		this.upgradeManager = new UpgradeManager(this);
+		this.textManager = new TextManager(this);
 
 		this.loadSounds();
 	}
 
 	loadSounds() {
 		sound.add('music-intro', {
-			url: './music-intro.mp3',
+			url: './sounds/music-intro.mp3',
 			volume: 0.3
 		});
-		sound.add('music', { url: './music.mp3', loop: true, volume: 0.3 });
-		sound.add('laser', { url: './laser.mp3', volume: 0.1 });
+		sound.add('music', { url: './sounds/music.mp3', loop: true, volume: 0.3 });
 
-		sound.add('impact', { url: './impact2.mp3', volume: 0.5 });
-		sound.add('hit', { url: './impact4.mp3', volume: 0.08 });
+		sound.add('shmup-solo', { url: './sounds/shmup-solo.mp3', volume: 0.5 });
+		sound.add('shmup-coop', { url: './sounds/shmup-coop.mp3', volume: 0.5 });
 
-		sound.add('shmup-solo', { url: './shmup-solo.mp3', volume: 0.5 });
-		sound.add('shmup-coop', { url: './shmup-coop.mp3', volume: 0.5 });
-		// sound.add('coin', { url: './coin.mp3', volume: 0.1 });
-
-		// new sounds
 		sound.add('gun-shoot', { url: './sounds/gun-shoot.mp3', volume: 0.2 });
 		sound.add('player-hit', { url: './sounds/player-hit.mp3', volume: 0.7 });
 		sound.add('player-dying', { url: './sounds/player-dying.mp3', volume: 0.3 });
@@ -140,26 +138,6 @@ export default class Game {
 	createStats() {
 		this.stats = new Stats();
 		document.body.appendChild(this.stats.dom);
-	}
-
-	showText(x: number, y: number, color: number, text: string) {
-		const style = new PIXI.TextStyle({
-			fontFamily: 'Arial',
-			fontSize: 36,
-			fill: color,
-			align: 'center'
-		});
-
-		// Create the text object
-		const richText = new PIXI.Text({ text, style });
-
-		richText.anchor.set(0.5);
-		// Position the text
-
-		richText.position.set(x, y);
-
-		// Add the text to the stage
-		this.container.addChild(richText);
 	}
 
 	removeStats() {
@@ -353,7 +331,12 @@ export default class Game {
 			if (enemy && projectile) {
 				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, projectile.color);
 
-				this.showText(enemy.x, enemy.y, projectile.color, projectile.damage.toString());
+				this.textManager.addText({
+					x: enemy.x,
+					y: enemy.y,
+					color: projectile.color,
+					text: Math.round(Math.min(projectile.damage, enemy.health)).toString()
+				});
 
 				enemy.impulse(projectile.vx * 200000, -projectile.vy * 200000);
 				enemy.takeDamage(projectile.damage);
@@ -363,6 +346,13 @@ export default class Game {
 			}
 
 			if (enemy && weapon) {
+				this.textManager.addText({
+					x: enemy.x,
+					y: enemy.y,
+					color: weapon.color,
+					text: Math.round(Math.min(weapon.damage, enemy.health)).toString()
+				});
+
 				this.spawnParticles(weapon.x, weapon.y, 50, weapon.color);
 
 				enemy.takeDamage(weapon.damage);
@@ -423,6 +413,8 @@ export default class Game {
 		this.itemManager.update(deltaTime);
 
 		this.lightManager.update(deltaTime);
+
+		this.textManager.update(deltaTime);
 
 		if (this.invincible) {
 			for (let players of this.playerManager?.players ?? []) {

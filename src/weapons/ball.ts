@@ -1,5 +1,4 @@
 import Game from '../app';
-import { Light } from '../light';
 import * as PIXI from 'pixi.js';
 import { RAPIER } from '../helper/rapier';
 import { Collider, RigidBody } from '@dimforge/rapier2d';
@@ -12,6 +11,8 @@ export class BallWeapon extends Weapon {
 	distance: number = 100;
 	speed: number = 0.002;
 	angle: number = 0;
+
+	name: string = 'chainsaw';
 
 	constructor(game: Game, color: number) {
 		super(game, color);
