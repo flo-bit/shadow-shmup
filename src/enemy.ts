@@ -281,7 +281,7 @@ export default class Enemy implements PlayerHit {
 			this.destroy();
 		}
 
-		sound.play('hit');
+		sound.play('enemy-hit');
 	}
 }
 
@@ -312,7 +312,8 @@ export class SphereEnemy extends Enemy {
 			projectileSize: 4,
 			lifetime: 300,
 			damage: 5,
-			showParticles: true
+			showParticles: true,
+			sound: false
 		});
 
 		this.createIndicator();
@@ -321,15 +322,6 @@ export class SphereEnemy extends Enemy {
 	}
 
 	async createIndicator() {
-		const texture = await PIXI.Assets.load('./light.png');
-
-		// this.indicator = PIXI.Sprite.from(texture);
-		// this.indicator.anchor.set(0.5);
-		// this.indicator.scale.set(0.0);
-		// this.indicator.alpha = 0.5;
-		// this.indicator.tint = this.color;
-		// this.indicator.zIndex = -10;
-
 		this.indicator = new PIXI.Graphics()
 			.circle(0, 0, this.size + this.shootingDistance)
 			.stroke({ color: this.color, width: 5 });
@@ -360,6 +352,8 @@ export class SphereEnemy extends Enemy {
 			this.shooting = false;
 
 			this.indicator?.scale.set(0);
+
+			sound.play('enemy-exploding');
 		}
 
 		if (distance < 150 && this.cooldown <= 0) {
@@ -492,7 +486,8 @@ export class PentagonEnemy extends Enemy {
 			fireRate: 5000,
 			projectileSize: 12,
 			damage: 10,
-			lifetime: 4000
+			lifetime: 4000,
+			sound: false
 		});
 
 		this.speed = 900;
@@ -566,7 +561,9 @@ export class PentagonEnemy extends Enemy {
 
 	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {
 		if (distance < 400) {
-			this.weapon.fire(this.position, nearestPlayer.position);
+			if (this.weapon.fire(this.position, nearestPlayer.position)) {
+				sound.play('enemy-shooting');
+			}
 		}
 
 		this.weapon.update(deltaTime);

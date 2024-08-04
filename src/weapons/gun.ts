@@ -88,8 +88,11 @@ export class GunWeapon {
 			});
 			this.cooldown = this.fireRate;
 
-			if (this.sound) sound.play('laser');
+			if (this.sound) sound.play('gun-shoot');
+
+			return true;
 		}
+		return false;
 	}
 
 	update(deltaTime: number) {

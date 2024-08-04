@@ -30,7 +30,7 @@ The shadows are coming for you! Can you survive the onslaught? Move with WASD, a
     - [ ] show stats at end of game
 - [ ] tutorial
 - [ ] move wave counter to top right corner
-- [ ] 
+- [ ] pentagon enemies: make bullets pentagon shaped and slowly rotating (and some kind of warning?)
 - [ ] different players
     - [ ] different weapons
     - [ ] different shapes

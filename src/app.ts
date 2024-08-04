@@ -86,6 +86,10 @@ export default class Game {
 		this.lightManager = new LightManager(this);
 		this.upgradeManager = new UpgradeManager(this);
 
+		this.loadSounds();
+	}
+
+	loadSounds() {
 		sound.add('music-intro', {
 			url: './music-intro.mp3',
 			volume: 0.3
@@ -98,7 +102,18 @@ export default class Game {
 
 		sound.add('shmup-solo', { url: './shmup-solo.mp3', volume: 0.5 });
 		sound.add('shmup-coop', { url: './shmup-coop.mp3', volume: 0.5 });
-		sound.add('coin', { url: './coin.mp3', volume: 0.1 });
+		// sound.add('coin', { url: './coin.mp3', volume: 0.1 });
+
+		// new sounds
+		sound.add('gun-shoot', { url: './sounds/gun-shoot.mp3', volume: 0.2 });
+		sound.add('player-hit', { url: './sounds/player-hit.mp3', volume: 0.7 });
+		sound.add('player-dying', { url: './sounds/player-dying.mp3', volume: 0.3 });
+
+		sound.add('coin', { url: './sounds/coin.mp3', volume: 0.2 });
+
+		sound.add('enemy-hit', { url: './sounds/enemy-hit.mp3', volume: 0.1 });
+		sound.add('enemy-exploding', { url: './sounds/enemy-exploding.mp3', volume: 0.2 });
+		sound.add('enemy-shooting', { url: './sounds/enemy-shooting.mp3', volume: 0.07 });
 	}
 
 	async setupPhysicsWorld() {
@@ -326,8 +341,6 @@ export default class Game {
 				this.spawnParticles(weapon.x, weapon.y, 50, weapon.color);
 
 				enemy.takeDamage(weapon.damage);
-
-				console.log('enemy hit');
 			}
 
 			if (enemy && player && enemy.hitPlayer) {
@@ -339,14 +352,12 @@ export default class Game {
 
 				player.takeDamage(projectile.damage);
 				projectile.destroy();
-
-				sound.play('shmup-solo');
 			}
 
 			if (player && item) {
 				item.pickup(player);
 
-				// sound.play('coin');
+				sound.play('coin');
 			}
 
 			if (projectile) {
@@ -356,7 +367,6 @@ export default class Game {
 	}
 
 	spawnParticles(x: number, y: number, num: number, color: number = 0xffffff) {
-		console.log('spawn particles', x, y, num, color);
 		for (let i = 0; i < num; i++) {
 			this.particleSystem?.createParticle(
 				x,
