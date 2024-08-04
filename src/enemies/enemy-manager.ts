@@ -1,5 +1,5 @@
 import { Vector2 } from '@dimforge/rapier2d';
-import Game from './app.js';
+import Game from '../app.js';
 import Enemy, { PentagonEnemy, SphereEnemy, TriangleEnemy } from './enemy.js';
 
 export default class EnemyManager {
@@ -23,7 +23,7 @@ export default class EnemyManager {
 	addEnemy(enemyType: typeof Enemy = this.randomEnemyType()) {
 		const enemy = new enemyType(this.game);
 		this.enemies.push(enemy);
-		
+
 		return enemy;
 	}
 

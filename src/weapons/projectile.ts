@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
-import { RAPIER } from './rapier';
-import Game from './app';
+import { RAPIER } from '../helper/rapier';
+import Game from '../app';
 import { ProjectileData } from './projectile-manager';
 
 export class Projectile {

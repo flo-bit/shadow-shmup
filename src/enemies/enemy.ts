@@ -1,11 +1,11 @@
 import * as PIXI from 'pixi.js';
-import Game from './app';
-import { RAPIER } from './rapier';
+import Game from '../app';
+import { RAPIER } from '../helper/rapier';
 import { Vector2, type RigidBody } from '@dimforge/rapier2d';
-import Eye from './eye';
-import Player from './player';
-import { GunWeapon } from './weapons/gun';
-import { Projectile } from './projectile';
+import Eye from '../visuals/eye';
+import Player from '../player/player';
+import { GunWeapon } from '../weapons/gun';
+import { Projectile } from '../weapons/projectile';
 import { sound } from '@pixi/sound';
 
 interface PlayerHit {

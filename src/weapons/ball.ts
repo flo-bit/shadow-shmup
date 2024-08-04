@@ -1,7 +1,7 @@
 import Game from '../app';
 import { Light } from '../light';
 import * as PIXI from 'pixi.js';
-import { RAPIER } from '../rapier';
+import { RAPIER } from '../helper/rapier';
 import { Collider, RigidBody } from '@dimforge/rapier2d';
 import { Weapon } from './weapon';
 

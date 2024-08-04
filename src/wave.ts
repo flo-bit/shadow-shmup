@@ -1,5 +1,5 @@
 import Game from './app';
-import Enemy, { PentagonEnemy, SphereEnemy, TriangleEnemy } from './enemy';
+import Enemy, { PentagonEnemy, SphereEnemy, TriangleEnemy } from './enemies/enemy';
 
 type EnemySpawnConfig = {
 	type: typeof Enemy;

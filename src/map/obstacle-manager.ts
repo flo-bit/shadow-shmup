@@ -1,9 +1,9 @@
-import Game from './app';
+import Game from '../app';
 import * as PIXI from 'pixi.js';
 import Obstacle from './obstacles';
 
 import Alea from 'alea';
-import { Light } from './light';
+import { Light } from '../visuals/light';
 
 const CELL_SIZE = 1200;
 const OBSTACLE_COUNT_PER_CELL = 40;

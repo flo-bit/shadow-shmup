@@ -1,5 +1,5 @@
 import Game from '../app';
-import { Projectile } from '../projectile';
+import { Projectile } from './projectile';
 
 import { sound } from '@pixi/sound';
 

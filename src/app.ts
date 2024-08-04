@@ -1,27 +1,29 @@
-import Player from './player.js';
-import EnemyManager from './enemy-manager.js';
 import * as PIXI from 'pixi.js';
 import { type World, EventQueue } from '@dimforge/rapier2d';
-import { RAPIER } from './rapier.js';
-import ParticleSystem from './particles.js';
-import { Projectile } from './projectile.js';
-import Enemy from './enemy.js';
+import { RAPIER } from './helper/rapier.js';
 
 import Stats from 'stats.js';
 
 import { AdvancedBloomFilter } from 'pixi-filters';
-import PlayerManager from './player-manager.js';
-import ProjectileManager, { ProjectileData } from './projectile-manager.js';
-
 import { sound } from '@pixi/sound';
-import Controls from './controls.js';
-import { ObstacleManager } from './obstacle-manager.js';
+
+import ParticleSystem from './visuals/particles.js';
+import { Projectile } from './weapons/projectile.js';
+import Enemy from './enemies/enemy.js';
+import Player from './player/player.js';
+import EnemyManager from './enemies/enemy-manager.js';
+
+import PlayerManager from './player/player-manager.js';
+import ProjectileManager, { ProjectileData } from './weapons/projectile-manager.js';
+
+import Controls from './helper/controls.js';
+import { ObstacleManager } from './map/obstacle-manager.js';
 import { WaveManager } from './wave.js';
-import { Item, ItemOptions } from './item.js';
-import { ItemManager } from './item-manager.js';
-import { LightManager } from './light-manager.js';
-import { createNoiseSprite } from './helper.js';
-import { UpgradeManager } from './upgrade-manager.js';
+import { Item, ItemOptions } from './coins/coin.js';
+import { ItemManager } from './coins/coin-manager.js';
+import { LightManager } from './visuals/light-manager.js';
+import { createNoiseSprite } from './helper/helper.js';
+import { UpgradeManager } from './upgrades/upgrade-manager.js';
 import { Weapon } from './weapons/weapon.js';
 
 export default class Game {
@@ -122,6 +124,7 @@ export default class Game {
 		let gravity = new RAPIER.Vector2(0.0, 0.0);
 		let world = new RAPIER.World(gravity);
 
+		// @ts-ignore
 		window.RAPIER = RAPIER;
 		this.world = world;
 	}
@@ -137,6 +140,26 @@ export default class Game {
 	createStats() {
 		this.stats = new Stats();
 		document.body.appendChild(this.stats.dom);
+	}
+
+	showText(x: number, y: number, color: number, text: string) {
+		const style = new PIXI.TextStyle({
+			fontFamily: 'Arial',
+			fontSize: 36,
+			fill: color,
+			align: 'center'
+		});
+
+		// Create the text object
+		const richText = new PIXI.Text({ text, style });
+
+		richText.anchor.set(0.5);
+		// Position the text
+
+		richText.position.set(x, y);
+
+		// Add the text to the stage
+		this.container.addChild(richText);
 	}
 
 	removeStats() {
@@ -329,6 +352,8 @@ export default class Game {
 
 			if (enemy && projectile) {
 				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, projectile.color);
+
+				this.showText(enemy.x, enemy.y, projectile.color, projectile.damage.toString());
 
 				enemy.impulse(projectile.vx * 200000, -projectile.vy * 200000);
 				enemy.takeDamage(projectile.damage);

@@ -1,13 +1,13 @@
-import { GunWeapon } from './weapons/gun.js';
+import { GunWeapon } from '../weapons/gun.js';
 import * as PIXI from 'pixi.js';
 
-import Game from './app';
-import { RAPIER } from './rapier';
+import Game from '../app.js';
+import { RAPIER } from '../helper/rapier.js';
 import { type RigidBody } from '@dimforge/rapier2d';
-import Eye from './eye.js';
-import { Light } from './light.js';
-import { blendColors } from './helper.js';
-import { Weapon } from './weapons/weapon.js';
+import Eye from '../visuals/eye.js';
+import { Light } from '../visuals/light.js';
+import { blendColors } from '../helper/helper.js';
+import { Weapon } from '../weapons/weapon.js';
 import { sound } from '@pixi/sound';
 
 export default class Player {

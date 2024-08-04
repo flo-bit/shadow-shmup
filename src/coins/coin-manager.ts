@@ -1,5 +1,5 @@
-import Game from './app';
-import { Item, ItemOptions } from './item';
+import Game from '../app';
+import { Item, ItemOptions } from './coin';
 
 export class ItemManager {
 	items: Item[] = [];
