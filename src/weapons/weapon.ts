@@ -19,6 +19,8 @@ export class Weapon {
 	rigidBody?: RigidBody;
 	collider?: Collider;
 
+	name: string = 'weapon';
+
 	constructor(game: Game, color: number) {
 		this.game = game;
 

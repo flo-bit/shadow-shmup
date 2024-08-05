@@ -1,12 +1,12 @@
 import * as PIXI from 'pixi.js';
-import Game from './app';
-import { RAPIER } from './rapier';
-import { Vector2, type RigidBody } from '@dimforge/rapier2d';
-import Eye from './eye';
-import Player from './player';
-import { GunWeapon } from './weapons/gun';
-import { Projectile } from './projectile';
+import { type RigidBody } from '@dimforge/rapier2d';
+import { RAPIER } from '../helper/rapier';
 import { sound } from '@pixi/sound';
+
+import Game from '../app';
+import Eye from '../visuals/eye';
+import Player from '../player/player';
+import { GunWeapon } from '../weapons/gun';
 
 interface PlayerHit {
 	hitPlayer?(player: Player): void;
@@ -27,6 +27,9 @@ export default class Enemy implements PlayerHit {
 	speed: number = 500;
 
 	shape?: PIXI.Graphics;
+	highlight?: PIXI.Graphics;
+
+	timeSinceLastHit: number = 10000;
 
 	exploding: boolean;
 	destroyTime: number;
@@ -42,7 +45,7 @@ export default class Enemy implements PlayerHit {
 
 	eyes?: PIXI.Container;
 
-	color: number = 0xd946ef;
+	color: number = 0xffffff;
 
 	type: number = -1;
 
@@ -62,14 +65,8 @@ export default class Enemy implements PlayerHit {
 
 		game.container.addChild(this.enemyContainer);
 
-		this.createShape();
-
-		this.maxHealth = 10;
+		this.maxHealth = 30;
 		this.health = this.maxHealth;
-
-		if (game.debug) this.createHealthBar();
-
-		this.createRidigBody();
 
 		this.exploding = false;
 		this.destroyTime = -1;
@@ -78,6 +75,12 @@ export default class Enemy implements PlayerHit {
 
 		this.isEnemy = true;
 
+		if (game.debug) this.createHealthBar();
+	}
+
+	setup() {
+		this.createShape();
+		this.createRidigBody();
 		this.createEyes();
 	}
 
@@ -107,6 +110,10 @@ export default class Enemy implements PlayerHit {
 	createShape() {
 		this.shape = new PIXI.Graphics().circle(0, 0, this.size / 2).fill(0);
 		this.enemyContainer.addChild(this.shape);
+
+		this.highlight = new PIXI.Graphics().circle(0, 0, this.size / 2).fill(this.color);
+		this.highlight.alpha = 0;
+		this.enemyContainer.addChild(this.highlight);
 	}
 
 	createHealthBar() {
@@ -227,6 +234,17 @@ export default class Enemy implements PlayerHit {
 		this.updateEyes(deltaTime, nearestPlayer, distance);
 
 		this.enemyContainer.position.set(this.x, this.y);
+
+		this.updateHighlight(deltaTime);
+	}
+
+	updateHighlight(deltaTime: number) {
+		this.timeSinceLastHit += deltaTime;
+		if (this.highlight) {
+			if (this.timeSinceLastHit < 400)
+				this.highlight.alpha = (1 - this.timeSinceLastHit / 400) * 0.8;
+			else this.highlight.alpha = 0;
+		}
 	}
 
 	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number) {
@@ -277,299 +295,13 @@ export default class Enemy implements PlayerHit {
 
 		if (this.healthBar) this.healthBar.width = (this.health / this.maxHealth) * this.size;
 
+		this.timeSinceLastHit = 0;
+
 		if (this.health <= 0) {
 			this.destroy();
 		}
 
-		sound.play('hit');
-	}
-}
-
-export class SphereEnemy extends Enemy {
-	weapon: GunWeapon;
-
-	indicator?: PIXI.Graphics;
-
-	shootingDistance = 20;
-
-	fireDelay: number = 1000;
-	cooldown: number = 0;
-
-	shooting: boolean = false;
-
-	burstNumber: number = 10;
-
-	constructor(game: Game) {
-		super(game);
-
-		this.type = 1;
-
-		this.weapon = new GunWeapon(this.game, {
-			color: this.color,
-			collisionGroups: 0x00100001,
-			projectileSpeed: 0.3,
-			fireRate: 1000,
-			projectileSize: 4,
-			lifetime: 300,
-			damage: 5,
-			showParticles: true
-		});
-
-		this.createIndicator();
-
-		this.speed = 300;
-	}
-
-	async createIndicator() {
-		const texture = await PIXI.Assets.load('./light.png');
-
-		// this.indicator = PIXI.Sprite.from(texture);
-		// this.indicator.anchor.set(0.5);
-		// this.indicator.scale.set(0.0);
-		// this.indicator.alpha = 0.5;
-		// this.indicator.tint = this.color;
-		// this.indicator.zIndex = -10;
-
-		this.indicator = new PIXI.Graphics()
-			.circle(0, 0, this.size + this.shootingDistance)
-			.stroke({ color: this.color, width: 5 });
-		this.indicator.scale.set(0);
-		this.indicator.zIndex = -10;
-		this.enemyContainer.addChild(this.indicator);
-	}
-
-	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {
-		if (this.cooldown > 0) {
-			this.cooldown -= deltaTime;
-
-			if (this.indicator) {
-				this.indicator.scale.set(1 - this.cooldown / this.fireDelay);
-			}
-		}
-
-		if (this.shooting && this.cooldown <= 0 && this.weapon.cooldown <= 0) {
-			for (let i = 0; i < this.burstNumber; i++) {
-				this.weapon.cooldown = -1;
-				// get angle
-				let angle = (Math.PI / this.burstNumber) * 2 * i;
-				let x = Math.cos(angle) + this.position.x;
-				let y = Math.sin(angle) + this.position.y;
-				this.weapon.fire(this.position, { x, y });
-			}
-
-			this.shooting = false;
-
-			this.indicator?.scale.set(0);
-		}
-
-		if (distance < 150 && this.cooldown <= 0) {
-			this.shooting = true;
-			this.cooldown = this.fireDelay;
-		}
-
-		this.weapon.update(deltaTime);
-	}
-}
-
-export class TriangleEnemy extends Enemy {
-	projectile: Projectile;
-
-	constructor(game: Game) {
-		super(game);
-
-		this.type = 0;
-		this.speed = 600;
-
-		let position = { x: this.x, y: this.y };
-
-		this.projectile = new Projectile(this.game, {
-			position,
-			enemyPosition: position,
-			speed: 0.0,
-			damage: 10,
-			size: 2,
-			angleOffset: 0,
-			hit: () => {
-				this.destroy();
-			},
-			collisionGroups: 0x00100001,
-			color: this.color
-		});
-	}
-
-	createEyes() {
-		this.color = 0x0ea5e9;
-		super.createEyes();
-	}
-
-	createShape(): void {
-		this.size = 20;
-		this.shape = new PIXI.Graphics()
-			.poly([-this.size, -this.size / 2, this.size, -this.size / 2, 0, this.size])
-			.fill(0);
-		this.enemyContainer.addChild(this.shape);
-	}
-
-	createRidigBody(): void {
-		const rigidBodyDesc = RAPIER()
-			.RigidBodyDesc.dynamic()
-			.setTranslation(this.x, this.y)
-			.lockRotations()
-			.setLinearDamping(1);
-		this.rigidBody = this.game.world.createRigidBody(rigidBodyDesc);
-
-		const colliderDesc = RAPIER()
-			.ColliderDesc.triangle(
-				new Vector2(-this.size, this.size / 2),
-				new Vector2(this.size, this.size / 2),
-				new Vector2(0, -this.size)
-			)
-			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
-			.setCollisionGroups(0x00020007)
-			.setDensity(1);
-
-		this.game.world.createCollider(colliderDesc, this.rigidBody);
-
-		this.rigidBody.userData = this;
-	}
-
-	updateVisuals(
-		deltaTime: number,
-		nearestPlayer: Player,
-		dx: number,
-		dy: number,
-		distance: number
-	) {
-		// move eyes
-
-		const angle = Math.atan2(dy, dx);
-
-		this.leftEye?.move(Math.PI / 2);
-		this.rightEye?.move(Math.PI / 2);
-
-		this.updateEyes(deltaTime, nearestPlayer, distance);
-
-		this.rotation = angle - Math.PI / 2;
-
-		this.enemyContainer.position.set(this.x, this.y);
-	}
-
-	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {
-		if (this.destroyed) return;
-
-		const x = Math.cos(this.rotation + Math.PI / 2);
-		const y = Math.sin(this.rotation + Math.PI / 2);
-
-		this.projectile.setPosition(this.x + x * 20 - 1, this.y + y * 20 - 1);
-
-		if (distance < nearestPlayer.viewDistance) {
-			this.projectile.shape.alpha = 1;
-		} else {
-			this.projectile.shape.alpha = 0;
-		}
-	}
-
-	destroy(dropItem: boolean = true): void {
-		if (this.destroyed) return;
-
-		this.projectile.destroy();
-		super.destroy(dropItem);
-	}
-}
-
-export class PentagonEnemy extends Enemy {
-	weapon: GunWeapon;
-
-	constructor(game: Game) {
-		super(game);
-
-		this.type = 2;
-
-		this.weapon = new GunWeapon(this.game, {
-			color: this.color,
-			collisionGroups: 0x00100001,
-			projectileSpeed: 0.15,
-			fireRate: 5000,
-			projectileSize: 12,
-			damage: 10,
-			lifetime: 4000
-		});
-
-		this.speed = 900;
-	}
-
-	createEyes() {
-		this.color = 0x6366f1;
-		super.createEyes();
-	}
-
-	createShape(): void {
-		this.size = 30;
-		const points: number[] = [];
-		for (let i = 0; i < 5; i++) {
-			const angle = (i / 5) * Math.PI * 2;
-			points.push(Math.cos(angle) * this.size, Math.sin(angle) * this.size);
-		}
-		this.shape = new PIXI.Graphics().poly(points).fill(0);
-		this.enemyContainer.addChild(this.shape);
-	}
-
-	createRidigBody(): void {
-		const rigidBodyDesc = RAPIER()
-			.RigidBodyDesc.dynamic()
-			.setTranslation(this.x, this.y)
-			.lockRotations()
-			.setLinearDamping(0.5);
-		this.rigidBody = this.game.world.createRigidBody(rigidBodyDesc);
-
-		const vertices = new Float32Array(10);
-
-		for (let i = 0; i < 5; i++) {
-			const angle = (i / 5) * Math.PI * 2;
-			vertices[i * 2] = Math.cos(angle) * this.size;
-			vertices[i * 2 + 1] = Math.sin(angle) * this.size;
-		}
-
-		const convexHull = RAPIER().ColliderDesc.convexHull(vertices);
-
-		if (!convexHull) return;
-
-		const colliderDesc = convexHull
-			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
-			.setCollisionGroups(0x00020007);
-
-		this.game.world.createCollider(colliderDesc, this.rigidBody);
-
-		this.rigidBody.userData = this;
-	}
-
-	updateVisuals(
-		deltaTime: number,
-		nearestPlayer: Player,
-		dx: number,
-		dy: number,
-		distance: number
-	): void {
-		const angle = Math.atan2(dy, dx);
-
-		const rotationSpeed = 0.001;
-		this.rotation += rotationSpeed * deltaTime;
-
-		// move eyes
-		this.leftEye?.move(-this.rotation + angle);
-		this.rightEye?.move(-this.rotation + angle);
-
-		this.updateEyes(deltaTime, nearestPlayer, distance);
-
-		this.enemyContainer.position.set(this.x, this.y);
-	}
-
-	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {
-		if (distance < 400) {
-			this.weapon.fire(this.position, nearestPlayer.position);
-		}
-
-		this.weapon.update(deltaTime);
+		sound.play('enemy-hit');
 	}
 }
 

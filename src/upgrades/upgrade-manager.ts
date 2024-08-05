@@ -1,8 +1,7 @@
-import Game from './app';
-import { Item } from './item';
+import Game from '../app';
+import { Item } from '../coins/coin';
 import { addUpgradeOption } from './upgrades';
 import { allUpgrades, Upgrade } from './upgrades-player';
-
 
 export class UpgradeManager {
 	colors_classes = ['bg-sky-500', 'bg-pink-500', 'bg-emerald-500'];

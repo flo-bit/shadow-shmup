@@ -1,8 +1,9 @@
 import { Collider, RigidBody } from '@dimforge/rapier2d';
-import Game from './app';
 import * as PIXI from 'pixi.js';
-import { RAPIER } from './rapier';
-import Player from './player';
+import { RAPIER } from '../helper/rapier';
+
+import Game from '../app';
+import Player from '../player/player';
 
 export type ItemOptions = {
 	x: number;

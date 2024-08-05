@@ -1,5 +1,10 @@
 import Game from './app';
-import Enemy, { PentagonEnemy, SphereEnemy, TriangleEnemy } from './enemy';
+import Enemy from './enemies/enemy';
+import { LineEnemy } from './enemies/line-enemy';
+
+import { PentagonEnemy } from './enemies/pentagon-enemies';
+import { SphereEnemy } from './enemies/sphere-enemies';
+import { TriangleEnemy } from './enemies/triangle-enemies';
 
 type EnemySpawnConfig = {
 	type: typeof Enemy;
@@ -35,26 +40,19 @@ export class Wave {
 			this.isActive = true;
 		}
 
-		// if (this.isActive) {
 		this.enemies.forEach((enemy, index) => {
 			this.spawnAccumulators[index] += deltaTimeSeconds;
 			const spawnInterval = 1 / enemy.spawnRate;
 
 			while (this.spawnAccumulators[index] >= spawnInterval) {
 				if (!enemy.maxCount || this.enemyCounts[index] < enemy.maxCount) {
-					let spawned = this.spawnEnemy(enemy.type);
-
-					// if (index === 0 && spawned) {
-					// 	// triple speed
-					// 	spawned.speed *= 3;
-					// }
+					this.spawnEnemy(enemy.type);
 
 					this.enemyCounts[index]++;
 				}
 				this.spawnAccumulators[index] -= spawnInterval;
 			}
 		});
-		// }
 	}
 
 	spawnEnemy(enemyType: typeof Enemy) {
@@ -146,6 +144,19 @@ export class WaveManager {
 
 // Example usage:
 const exampleWaves: WaveData[] = [
+	// {
+	// 	enemies: [
+	// 		{
+	// 			type: LineEnemy,
+	// 			spawnRate: 1,
+	// 			upgradeFunction: (enemy) => {
+	// 				enemy.health *= 1.5;
+	// 				enemy.value *= 2;
+	// 			}
+	// 		}
+	// 	],
+	// 	neededItems: 10
+	// },
 	// wave 1
 	{
 		enemies: [
@@ -562,5 +573,26 @@ const exampleWaves: WaveData[] = [
 		],
 		startDelay: 3,
 		neededItems: 100000
+	}, // wave 15
+	{
+		enemies: [
+			{
+				type: SphereEnemy,
+				spawnRate: 8,
+				upgradeFunction: (enemy) => {}
+			},
+			{
+				type: TriangleEnemy,
+				spawnRate: 8,
+				upgradeFunction: (enemy) => {}
+			},
+			{
+				type: PentagonEnemy,
+				spawnRate: 8,
+				upgradeFunction: (enemy) => {}
+			}
+		],
+		startDelay: 3,
+		neededItems: 1000000000
 	}
 ];

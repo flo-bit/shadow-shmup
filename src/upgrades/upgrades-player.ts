@@ -1,7 +1,7 @@
-import Player from './player';
+import Player from '../player/player';
 import { Icon } from './upgrades';
-import { BallWeapon } from './weapons/ball';
-import { Knife } from './weapons/knife';
+import { BallWeapon } from '../weapons/ball';
+import { Knife } from '../weapons/knife';
 
 export type Upgrade = {
 	upgrade: (player: Player) => void;

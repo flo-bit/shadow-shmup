@@ -1,4 +1,4 @@
-import Game from './app';
+import Game from '../app';
 
 export default class Controls {
 	keys: Record<string, boolean> = {};

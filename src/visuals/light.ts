@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
-import { RAPIER } from './rapier';
-import Game from './app';
+import { RAPIER } from '../helper/rapier';
+import Game from '../app';
 import { RigidBody } from '@dimforge/rapier2d';
 // import 'pixi.js/advanced-blend-modes';
 
@@ -189,7 +189,7 @@ export class Light {
 				this.shadow.lineTo(firstPoint.x, firstPoint.y);
 			}
 		}
-		this.shadow.fill(0, 0);
+		this.shadow.fill({ color: 0, alpha: 0 });
 	}
 
 	update(deltaTime: number) {

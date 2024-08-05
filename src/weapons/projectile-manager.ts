@@ -1,4 +1,4 @@
-import Game from './app';
+import Game from '../app';
 import { Projectile } from './projectile';
 
 export type ProjectileData = {

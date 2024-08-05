@@ -1,23 +1,15 @@
-import { GunWeapon } from './weapons/gun.js';
+import { GunWeapon } from '../weapons/gun.js';
 import * as PIXI from 'pixi.js';
 
-import Game from './app';
-import { RAPIER } from './rapier';
+import Game from '../app.js';
+import { RAPIER } from '../helper/rapier.js';
 import { type RigidBody } from '@dimforge/rapier2d';
-import Eye from './eye.js';
-import { Light } from './light.js';
-import { blendColors } from './helper.js';
-import { BallWeapon } from './weapons/ball.js';
-import { Weapon } from './weapons/weapon.js';
-import { Knife } from './weapons/knife.js';
-import { BurstWeapon } from './weapons/burst.js';
+import Eye from '../visuals/eye.js';
+import { Light } from '../visuals/light.js';
+import { blendColors } from '../helper/helper.js';
+import { Weapon } from '../weapons/weapon.js';
+import { sound } from '@pixi/sound';
 
-/**
- * Player class
- *
- * @export
- * @class Player
- */
 export default class Player {
 	game: Game;
 
@@ -74,7 +66,7 @@ export default class Player {
 		this._maxHealth = 100;
 		this._health = this._maxHealth;
 
-		this.color = num === 0 ? 0xbe123c : 0x4f46e5;
+		this.color = num === 0 ? 0xbe123c : 0xf97316;
 
 		this.playerContainer = new PIXI.Container();
 		game.container.addChild(this.playerContainer);
@@ -109,23 +101,6 @@ export default class Player {
 
 		this.x = 0;
 		this.y = 0;
-
-		// for (let i = 0; i < 5; i++) {
-		// 	let ball = new BallWeapon(this.game, this.color);
-		// 	ball.distance = 100 + i * 50;
-		// 	ball.angle = (Math.PI * 2 * i) / 20;
-		// 	ball.speed *= i * 0.1 + 2;
-		// 	this.weapons.push(ball);
-
-		// 	let knife = new Knife(this.game, this.color);
-		// 	knife.distance = 200;
-		// 	knife.angle = (Math.PI * 2 * i) / 5;
-		// 	this.weapons.push(knife);
-		// }
-		// this.weapons.push(new BurstWeapon(this.game, this.color));
-
-		//this.weapons = [];
-		//this.weapons = [new BallWeapon(this.game, this.color), new Knife(this.game, this.color)];
 	}
 
 	set health(value: number) {
@@ -291,6 +266,8 @@ export default class Player {
 		if (this.dead) return;
 
 		this.health -= amount;
+
+		sound.play('player-hit');
 
 		this.game.controls.rumble(this.num, (amount / this._maxHealth) * 50);
 

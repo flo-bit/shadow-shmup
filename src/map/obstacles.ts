@@ -1,6 +1,6 @@
 import { Collider } from '@dimforge/rapier2d';
-import Game from './app';
-import { RAPIER } from './rapier';
+import Game from '../app';
+import { RAPIER } from '../helper/rapier';
 import * as PIXI from 'pixi.js';
 
 export default class Obstacle {

@@ -1,5 +1,4 @@
-import Game from './app.js';
-import Enemy from './enemy.js';
+import Game from '../app.js';
 import Player from './player.js';
 
 export default class PlayerManager {

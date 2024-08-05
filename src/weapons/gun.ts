@@ -1,5 +1,5 @@
 import Game from '../app';
-import { Projectile } from '../projectile';
+import { Projectile } from './projectile';
 
 import { sound } from '@pixi/sound';
 
@@ -88,8 +88,11 @@ export class GunWeapon {
 			});
 			this.cooldown = this.fireRate;
 
-			if (this.sound) sound.play('laser');
+			if (this.sound) sound.play('gun-shoot');
+
+			return true;
 		}
+		return false;
 	}
 
 	update(deltaTime: number) {

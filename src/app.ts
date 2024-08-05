@@ -1,30 +1,32 @@
-import Player from './player.js';
-import EnemyManager from './enemy-manager.js';
 import * as PIXI from 'pixi.js';
 import { type World, EventQueue } from '@dimforge/rapier2d';
-import { RAPIER } from './rapier.js';
-import ParticleSystem from './particles.js';
-import { Projectile } from './projectile.js';
-import Enemy, { CrossEnemy } from './enemy.js';
+import { RAPIER } from './helper/rapier.js';
 
 import Stats from 'stats.js';
 
-import { AdvancedBloomFilter, OldFilmFilter } from 'pixi-filters';
-import PlayerManager from './player-manager.js';
-import ProjectileManager, { ProjectileData } from './projectile-manager.js';
-
+import { AdvancedBloomFilter } from 'pixi-filters';
 import { sound } from '@pixi/sound';
-import Controls from './controls.js';
-import { ObstacleManager } from './obstacle-manager.js';
+
+import ParticleSystem from './visuals/particles.js';
+import { Projectile } from './weapons/projectile.js';
+import Enemy from './enemies/enemy.js';
+import Player from './player/player.js';
+import EnemyManager from './enemies/enemy-manager.js';
+
+import PlayerManager from './player/player-manager.js';
+import ProjectileManager, { ProjectileData } from './weapons/projectile-manager.js';
+
+import Controls from './helper/controls.js';
+import { ObstacleManager } from './map/obstacle-manager.js';
 import { WaveManager } from './wave.js';
-import { Item, ItemOptions } from './item.js';
-import { ItemManager } from './item-manager.js';
-import { LightManager } from './light-manager.js';
-import { createNoiseSprite } from './helper.js';
-import { addUpgradeOption } from './upgrades.js';
-import { UpgradeManager } from './upgrade-manager.js';
-import { BallWeapon } from './weapons/ball.js';
+import { Item, ItemOptions } from './coins/coin.js';
+import { ItemManager } from './coins/coin-manager.js';
+import { LightManager } from './visuals/light-manager.js';
+import { createNoiseSprite } from './helper/helper.js';
+import { UpgradeManager } from './upgrades/upgrade-manager.js';
 import { Weapon } from './weapons/weapon.js';
+import { TextManager } from './visuals/text-manager.js';
+import { VignetteFilter } from './helper/vignette.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -51,6 +53,8 @@ export default class Game {
 
 	obstacleManager: ObstacleManager;
 
+	textManager: TextManager;
+
 	debug: boolean = false;
 
 	showStats: boolean = false;
@@ -63,6 +67,8 @@ export default class Game {
 
 	controls: Controls;
 
+	scaleMultiplier: number = 1;
+
 	scale: number = 1;
 
 	invincible = false;
@@ -73,6 +79,8 @@ export default class Game {
 
 	minWidth = 700;
 	minHeight = 900;
+
+	vignetteFilter?: VignetteFilter;
 
 	constructor() {
 		this.setup();
@@ -85,20 +93,30 @@ export default class Game {
 		this.itemManager = new ItemManager(this);
 		this.lightManager = new LightManager(this);
 		this.upgradeManager = new UpgradeManager(this);
+		this.textManager = new TextManager(this);
 
+		this.loadSounds();
+	}
+
+	loadSounds() {
 		sound.add('music-intro', {
-			url: './music-intro.mp3',
+			url: './sounds/music-intro.mp3',
 			volume: 0.3
 		});
-		sound.add('music', { url: './music.mp3', loop: true, volume: 0.3 });
-		sound.add('laser', { url: './laser.mp3', volume: 0.1 });
+		sound.add('music', { url: './sounds/music.mp3', loop: true, volume: 0.3 });
 
-		sound.add('impact', { url: './impact2.mp3', volume: 0.5 });
-		sound.add('hit', { url: './impact4.mp3', volume: 0.08 });
+		sound.add('shmup-solo', { url: './sounds/shmup-solo.mp3', volume: 0.5 });
+		sound.add('shmup-coop', { url: './sounds/shmup-coop.mp3', volume: 0.5 });
 
-		sound.add('shmup-solo', { url: './shmup-solo.mp3', volume: 0.5 });
-		sound.add('shmup-coop', { url: './shmup-coop.mp3', volume: 0.5 });
-		sound.add('coin', { url: './coin.mp3', volume: 0.1 });
+		sound.add('gun-shoot', { url: './sounds/gun-shoot.mp3', volume: 0.2 });
+		sound.add('player-hit', { url: './sounds/player-hit.mp3', volume: 0.7 });
+		sound.add('player-dying', { url: './sounds/player-dying.mp3', volume: 0.3 });
+
+		sound.add('coin', { url: './sounds/coin.mp3', volume: 0.2 });
+
+		sound.add('enemy-hit', { url: './sounds/enemy-hit.mp3', volume: 0.1 });
+		sound.add('enemy-exploding', { url: './sounds/enemy-exploding.mp3', volume: 0.2 });
+		sound.add('enemy-shooting', { url: './sounds/enemy-shooting.mp3', volume: 0.07 });
 	}
 
 	async setupPhysicsWorld() {
@@ -107,6 +125,7 @@ export default class Game {
 		let gravity = new RAPIER.Vector2(0.0, 0.0);
 		let world = new RAPIER.World(gravity);
 
+		// @ts-ignore
 		window.RAPIER = RAPIER;
 		this.world = world;
 	}
@@ -150,10 +169,14 @@ export default class Game {
 		const bloomFilter = new AdvancedBloomFilter({
 			threshold: 0.2,
 			quality: 32,
-			bloomScale: 1.4,
+			bloomScale: 1.3,
 			blur: 4
 		});
-		app.stage.filters = [bloomFilter];
+		this.vignetteFilter = new VignetteFilter({
+			color: 0xff0000,
+			strength: 0.5
+		});
+		app.stage.filters = [this.vignetteFilter, bloomFilter];
 
 		// add the canvas to the HTML document
 		document.body.appendChild(app.canvas);
@@ -165,7 +188,7 @@ export default class Game {
 		this.mainContainer.position.set(window.innerWidth / 2, window.innerHeight / 2);
 		// scale the container
 		this.scale = Math.min(window.innerWidth / this.minWidth, window.innerHeight / this.minHeight);
-		this.mainContainer.scale.set(this.scale);
+		this.mainContainer.scale.set(this.scale * this.scaleMultiplier);
 
 		// add a resize event listener
 		window.addEventListener('resize', () => {
@@ -173,19 +196,21 @@ export default class Game {
 
 			this.mainContainer.position.set(window.innerWidth / 2, window.innerHeight / 2);
 			this.scale = Math.min(window.innerWidth / this.minWidth, window.innerHeight / this.minHeight);
-			this.mainContainer.scale.set(this.scale);
+			this.mainContainer.scale.set(this.scale * this.scaleMultiplier);
 		});
 
 		let noise = createNoiseSprite(2000, 2000);
 		noise.anchor.set(0.5);
 		noise.scale.set(1);
-		noise.alpha = 0.3;
+		noise.alpha = 0.2;
 		noise.zIndex = 100;
 		this.mainContainer.addChild(noise);
 
 		app.ticker.add((ticker) => {
 			if (this.paused) return;
 			if (this.stats) this.stats.begin();
+
+			let alpha = Math.sin(this.playingTime * 0.001) * 0.5 + 0.5;
 
 			// get ellapsed time
 			const deltaTime = ticker.deltaMS;
@@ -212,9 +237,6 @@ export default class Game {
 
 				this.container.x += (position.x - this.container.x) * interpolationFactor;
 				this.container.y += (position.y - this.container.y) * interpolationFactor;
-
-				// this.container.x = position.x;
-				// this.container.y = position.y;
 			}
 
 			if (this.stats) this.stats.end();
@@ -318,6 +340,13 @@ export default class Game {
 			if (enemy && projectile) {
 				this.spawnParticles(projectile.shape.x, projectile.shape.y, 10, projectile.color);
 
+				this.textManager.addText({
+					x: enemy.x,
+					y: enemy.y,
+					color: projectile.color,
+					text: Math.round(Math.min(projectile.damage, enemy.health)).toString()
+				});
+
 				enemy.impulse(projectile.vx * 200000, -projectile.vy * 200000);
 				enemy.takeDamage(projectile.damage);
 
@@ -326,11 +355,16 @@ export default class Game {
 			}
 
 			if (enemy && weapon) {
+				this.textManager.addText({
+					x: enemy.x,
+					y: enemy.y,
+					color: weapon.color,
+					text: Math.round(Math.min(weapon.damage, enemy.health)).toString()
+				});
+
 				this.spawnParticles(weapon.x, weapon.y, 50, weapon.color);
 
 				enemy.takeDamage(weapon.damage);
-
-				console.log('enemy hit');
 			}
 
 			if (enemy && player && enemy.hitPlayer) {
@@ -342,14 +376,12 @@ export default class Game {
 
 				player.takeDamage(projectile.damage);
 				projectile.destroy();
-
-				sound.play('shmup-solo');
 			}
 
 			if (player && item) {
 				item.pickup(player);
 
-				// sound.play('coin');
+				sound.play('coin');
 			}
 
 			if (projectile) {
@@ -359,7 +391,6 @@ export default class Game {
 	}
 
 	spawnParticles(x: number, y: number, num: number, color: number = 0xffffff) {
-		console.log('spawn particles', x, y, num, color);
 		for (let i = 0; i < num; i++) {
 			this.particleSystem?.createParticle(
 				x,
@@ -392,10 +423,19 @@ export default class Game {
 
 		this.lightManager.update(deltaTime);
 
+		this.textManager.update(deltaTime);
+
 		if (this.invincible) {
 			for (let players of this.playerManager?.players ?? []) {
 				players.health = players._maxHealth;
 			}
+		}
+
+		let timeSinceLastDamage = this.playerManager?.smallestTimeSinceLastDamage();
+		if (timeSinceLastDamage !== undefined && this.vignetteFilter && timeSinceLastDamage < 250) {
+			this.vignetteFilter.alpha = (0.5 - timeSinceLastDamage / 500) * 0.5;
+		} else if (this.vignetteFilter) {
+			this.vignetteFilter.alpha = 0;
 		}
 
 		if (this.upgradeManager.canAdvance()) {
