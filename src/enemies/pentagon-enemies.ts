@@ -10,6 +10,8 @@ import Player from '../player/player';
 export class PentagonEnemy extends Enemy {
 	weapon: GunWeapon;
 
+	color = 0x6366f1;
+
 	constructor(game: Game) {
 		super(game);
 
@@ -27,10 +29,11 @@ export class PentagonEnemy extends Enemy {
 		});
 
 		this.speed = 900;
+
+		this.setup();
 	}
 
 	createEyes() {
-		this.color = 0x6366f1;
 		super.createEyes();
 	}
 
@@ -43,6 +46,10 @@ export class PentagonEnemy extends Enemy {
 		}
 		this.shape = new PIXI.Graphics().poly(points).fill(0);
 		this.enemyContainer.addChild(this.shape);
+
+		this.highlight = new PIXI.Graphics().poly(points).fill(this.color);
+		this.enemyContainer.addChild(this.highlight);
+		this.highlight.alpha = 0;
 	}
 
 	createRidigBody(): void {
@@ -93,6 +100,8 @@ export class PentagonEnemy extends Enemy {
 		this.updateEyes(deltaTime, nearestPlayer, distance);
 
 		this.enemyContainer.position.set(this.x, this.y);
+
+		this.updateHighlight(deltaTime);
 	}
 
 	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {

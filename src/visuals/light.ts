@@ -189,7 +189,7 @@ export class Light {
 				this.shadow.lineTo(firstPoint.x, firstPoint.y);
 			}
 		}
-		this.shadow.fill(0, 0);
+		this.shadow.fill({ color: 0, alpha: 0 });
 	}
 
 	update(deltaTime: number) {

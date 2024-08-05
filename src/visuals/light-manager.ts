@@ -1,4 +1,4 @@
-import Game from './app';
+import Game from '../app';
 import { Light, LightOptions } from './light';
 
 export class LightManager {

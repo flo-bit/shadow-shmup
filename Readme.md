@@ -1,30 +1,62 @@
 # shadow shmup
 
-The shadows are coming for you! Can you survive the onslaught? Move with WASD, auto-fires nearest enemy.
+Browsergame, fun and casual top-down, roguelike shoot 'em up with shadow elements and colorful neon effects, developed for the [2024 piratejam](https://itch.io/jam/pirate), with the theme "shadows and alchemy".
 
-## sounds
+See the submission on [itch.io](https://flo-bit.itch.io/shadow-shmup).
 
-- gun shooting
-- knife sound
-- chainsaw sound
+WIP. See the current development version on [GitHub Pages](https://flo-bit.github.io/shadow-shmup/).
 
-- player getting hit
-- enemy getting hit
-- player dying
+## How to play
 
-- enemy shooting
-- enemy exploding
-- enemy dying
+- Move with WASD or arrow keys
+- Player auto-shoots nearest enemy
 
-- collecting coins
-- collecting powerup
+For co-op mode:
 
-- click (selecting upgrade)
-- level up
+- Player 1: WASD to move
+- Player 2: arrow keys to move
 
+## Techstack
+
+PixiJS, Typescript, Vite, TailwindCSS, Rapier
+
+
+## Development
+
+1. Clone the repository
+
+```bash
+git clone https://github.com/flo-bit/shadow-shmup.git
+```
+
+2. Install dependencies
+
+```bash
+npm install
+```
+
+3. Run the development server
+
+```bash
+npm run dev
+```
+
+4. Open the game in your browser at [http://localhost:5173](http://localhost:5173)
+
+
+## credits:
+
+- music: [Nicholas Palmer](https://soundcloud.com/nicholas-palmer-4)
+- code and concept: [flo-bit](https://github.com/flo-bit) and [unbedenklich](https://github.com/unbedenklich)
+
+## License
+
+CC BY-NC 4.0
 
 ## TODO
 
+- [ ] more enemies
+    - [ ] laser dude
 - [ ] stats
     - [ ] count kills, deaths, damage taken, damage dealt
     - [ ] show stats at end of game
@@ -105,30 +137,8 @@ The shadows are coming for you! Can you survive the onslaught? Move with WASD, a
     - [x] enemies should be lit by light distance instead of player distance
 - [x] scale canvas so that it always shows a 1000x1000 area or something like that
 
-## Development
+## Bugs
 
-1. Clone the repository
-
-```bash
-git clone https://github.com/flo-bit/shadow-shmup.git
-```
-
-2. Install dependencies
-
-```bash
-npm install
-```
-
-3. Run the development server
-
-```bash
-npm run dev
-```
-
-4. Open the game in your browser at [http://localhost:5173](http://localhost:5173)
-
-
-## credits:
-
-- music: [Nicholas Palmer](https://soundcloud.com/nicholas-palmer-4)
-- sound effects: [Kenney](https://kenney.nl/)
+- [ ] sometimes stuck in wall (moving when low fps or spawn in wall)
+- [ ] weapons still active after player death (in coop)
+- [ ] bloom sometimes doesn't work (line enemy?)

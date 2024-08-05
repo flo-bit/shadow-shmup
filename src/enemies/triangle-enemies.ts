@@ -10,6 +10,8 @@ import Player from '../player/player';
 export class TriangleEnemy extends Enemy {
 	projectile: Projectile;
 
+	color = 0x0ea5e9;
+
 	constructor(game: Game) {
 		super(game);
 
@@ -31,10 +33,11 @@ export class TriangleEnemy extends Enemy {
 			collisionGroups: 0x00100001,
 			color: this.color
 		});
+
+		this.setup();
 	}
 
 	createEyes() {
-		this.color = 0x0ea5e9;
 		super.createEyes();
 	}
 
@@ -44,6 +47,13 @@ export class TriangleEnemy extends Enemy {
 			.poly([-this.size, -this.size / 2, this.size, -this.size / 2, 0, this.size])
 			.fill(0);
 		this.enemyContainer.addChild(this.shape);
+
+		this.highlight = new PIXI.Graphics()
+			.poly([-this.size, -this.size / 2, this.size, -this.size / 2, 0, this.size])
+			.fill(this.color);
+
+		this.enemyContainer.addChild(this.highlight);
+		this.highlight.alpha = 0;
 	}
 
 	createRidigBody(): void {
@@ -88,6 +98,8 @@ export class TriangleEnemy extends Enemy {
 		this.rotation = angle - Math.PI / 2;
 
 		this.enemyContainer.position.set(this.x, this.y);
+
+		this.updateHighlight(deltaTime);
 	}
 
 	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number): void {

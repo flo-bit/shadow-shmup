@@ -26,6 +26,7 @@ import { createNoiseSprite } from './helper/helper.js';
 import { UpgradeManager } from './upgrades/upgrade-manager.js';
 import { Weapon } from './weapons/weapon.js';
 import { TextManager } from './visuals/text-manager.js';
+import { VignetteFilter } from './helper/vignette.js';
 
 export default class Game {
 	container: PIXI.Container;
@@ -78,6 +79,8 @@ export default class Game {
 
 	minWidth = 700;
 	minHeight = 900;
+
+	vignetteFilter?: VignetteFilter;
 
 	constructor() {
 		this.setup();
@@ -166,10 +169,14 @@ export default class Game {
 		const bloomFilter = new AdvancedBloomFilter({
 			threshold: 0.2,
 			quality: 32,
-			bloomScale: 1.4,
+			bloomScale: 1.3,
 			blur: 4
 		});
-		app.stage.filters = [bloomFilter];
+		this.vignetteFilter = new VignetteFilter({
+			color: 0xff0000,
+			strength: 0.5
+		});
+		app.stage.filters = [this.vignetteFilter, bloomFilter];
 
 		// add the canvas to the HTML document
 		document.body.appendChild(app.canvas);
@@ -195,13 +202,15 @@ export default class Game {
 		let noise = createNoiseSprite(2000, 2000);
 		noise.anchor.set(0.5);
 		noise.scale.set(1);
-		noise.alpha = 0.3;
+		noise.alpha = 0.2;
 		noise.zIndex = 100;
 		this.mainContainer.addChild(noise);
 
 		app.ticker.add((ticker) => {
 			if (this.paused) return;
 			if (this.stats) this.stats.begin();
+
+			let alpha = Math.sin(this.playingTime * 0.001) * 0.5 + 0.5;
 
 			// get ellapsed time
 			const deltaTime = ticker.deltaMS;
@@ -420,6 +429,13 @@ export default class Game {
 			for (let players of this.playerManager?.players ?? []) {
 				players.health = players._maxHealth;
 			}
+		}
+
+		let timeSinceLastDamage = this.playerManager?.smallestTimeSinceLastDamage();
+		if (timeSinceLastDamage !== undefined && this.vignetteFilter && timeSinceLastDamage < 250) {
+			this.vignetteFilter.alpha = (0.5 - timeSinceLastDamage / 500) * 0.5;
+		} else if (this.vignetteFilter) {
+			this.vignetteFilter.alpha = 0;
 		}
 
 		if (this.upgradeManager.canAdvance()) {

@@ -20,6 +20,8 @@ export class SphereEnemy extends Enemy {
 
 	burstNumber: number = 10;
 
+	color: number = 0xd946ef;
+
 	constructor(game: Game) {
 		super(game);
 
@@ -40,6 +42,8 @@ export class SphereEnemy extends Enemy {
 		this.createIndicator();
 
 		this.speed = 300;
+
+		this.setup();
 	}
 
 	async createIndicator() {

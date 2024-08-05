@@ -66,7 +66,7 @@ export default class Player {
 		this._maxHealth = 100;
 		this._health = this._maxHealth;
 
-		this.color = num === 0 ? 0xbe123c : 0x4f46e5;
+		this.color = num === 0 ? 0xbe123c : 0xf97316;
 
 		this.playerContainer = new PIXI.Container();
 		game.container.addChild(this.playerContainer);

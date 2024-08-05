@@ -1,5 +1,6 @@
 import Game from './app';
 import Enemy from './enemies/enemy';
+import { LineEnemy } from './enemies/line-enemy';
 
 import { PentagonEnemy } from './enemies/pentagon-enemies';
 import { SphereEnemy } from './enemies/sphere-enemies';
@@ -143,6 +144,19 @@ export class WaveManager {
 
 // Example usage:
 const exampleWaves: WaveData[] = [
+	// {
+	// 	enemies: [
+	// 		{
+	// 			type: LineEnemy,
+	// 			spawnRate: 1,
+	// 			upgradeFunction: (enemy) => {
+	// 				enemy.health *= 1.5;
+	// 				enemy.value *= 2;
+	// 			}
+	// 		}
+	// 	],
+	// 	neededItems: 10
+	// },
 	// wave 1
 	{
 		enemies: [

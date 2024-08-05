@@ -27,6 +27,9 @@ export default class Enemy implements PlayerHit {
 	speed: number = 500;
 
 	shape?: PIXI.Graphics;
+	highlight?: PIXI.Graphics;
+
+	timeSinceLastHit: number = 10000;
 
 	exploding: boolean;
 	destroyTime: number;
@@ -42,7 +45,7 @@ export default class Enemy implements PlayerHit {
 
 	eyes?: PIXI.Container;
 
-	color: number = 0xd946ef;
+	color: number = 0xffffff;
 
 	type: number = -1;
 
@@ -62,14 +65,8 @@ export default class Enemy implements PlayerHit {
 
 		game.container.addChild(this.enemyContainer);
 
-		this.createShape();
-
-		this.maxHealth = 10;
+		this.maxHealth = 30;
 		this.health = this.maxHealth;
-
-		if (game.debug) this.createHealthBar();
-
-		this.createRidigBody();
 
 		this.exploding = false;
 		this.destroyTime = -1;
@@ -78,6 +75,12 @@ export default class Enemy implements PlayerHit {
 
 		this.isEnemy = true;
 
+		if (game.debug) this.createHealthBar();
+	}
+
+	setup() {
+		this.createShape();
+		this.createRidigBody();
 		this.createEyes();
 	}
 
@@ -107,6 +110,10 @@ export default class Enemy implements PlayerHit {
 	createShape() {
 		this.shape = new PIXI.Graphics().circle(0, 0, this.size / 2).fill(0);
 		this.enemyContainer.addChild(this.shape);
+
+		this.highlight = new PIXI.Graphics().circle(0, 0, this.size / 2).fill(this.color);
+		this.highlight.alpha = 0;
+		this.enemyContainer.addChild(this.highlight);
 	}
 
 	createHealthBar() {
@@ -227,6 +234,17 @@ export default class Enemy implements PlayerHit {
 		this.updateEyes(deltaTime, nearestPlayer, distance);
 
 		this.enemyContainer.position.set(this.x, this.y);
+
+		this.updateHighlight(deltaTime);
+	}
+
+	updateHighlight(deltaTime: number) {
+		this.timeSinceLastHit += deltaTime;
+		if (this.highlight) {
+			if (this.timeSinceLastHit < 400)
+				this.highlight.alpha = (1 - this.timeSinceLastHit / 400) * 0.8;
+			else this.highlight.alpha = 0;
+		}
 	}
 
 	attack(deltaTime: number, nearestPlayer: Player, dx: number, dy: number, distance: number) {
@@ -276,6 +294,8 @@ export default class Enemy implements PlayerHit {
 		this.health -= amount;
 
 		if (this.healthBar) this.healthBar.width = (this.health / this.maxHealth) * this.size;
+
+		this.timeSinceLastHit = 0;
 
 		if (this.health <= 0) {
 			this.destroy();
