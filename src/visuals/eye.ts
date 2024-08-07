@@ -20,10 +20,20 @@ export default class Eye {
 
 	color: number;
 
-	constructor(container: PIXI.Container, shiftX: number, shiftY: number, color = 0xffffff) {
+	scale: number = 1;
+
+	constructor(
+		container: PIXI.Container,
+		shiftX: number,
+		shiftY: number,
+		color = 0xffffff,
+		scale: number = 1
+	) {
 		this.eyeContainer = new PIXI.Container();
 
 		this.eyeContainer.position.set(shiftX, shiftY);
+
+		this.scale = scale;
 
 		container.addChild(this.eyeContainer);
 
@@ -32,16 +42,16 @@ export default class Eye {
 	}
 
 	async loadLayers() {
-		const base = new PIXI.Graphics().ellipse(0, 0, 5, 4).fill(this.color); //.fill(0xe11d48);
+		const base = new PIXI.Graphics().ellipse(0, 0, 5 * this.scale, 4 * this.scale).fill(this.color); //.fill(0xe11d48);
 		this.base = base;
 		this.base.alpha = 0;
 		this.eyeContainer.addChild(base);
 
-		const pupil = new PIXI.Graphics().circle(0, 0, 3).fill(0x000000);
+		const pupil = new PIXI.Graphics().circle(0, 0, 3 * this.scale).fill(0x000000);
 		this.pupil = pupil;
 		this.eyeContainer.addChild(pupil);
 
-		const mask = new PIXI.Graphics().ellipse(0, 0, 5, 4).fill(0xffffff);
+		const mask = new PIXI.Graphics().ellipse(0, 0, 5 * this.scale, 4 * this.scale).fill(0xffffff);
 		this.mask = mask;
 		this.eyeContainer.addChild(mask);
 
@@ -55,7 +65,7 @@ export default class Eye {
 		this.dx = this.dx * 0.9 + newDx * 0.1;
 		this.dy = this.dy * 0.9 + newDy * 0.1;
 
-		this.pupil?.position.set(this.dx * 2, this.dy * 2);
+		this.pupil?.position.set(this.dx * 2 * this.scale, this.dy * 2 * this.scale);
 	}
 
 	update(deltaTime: number, alpha: number) {

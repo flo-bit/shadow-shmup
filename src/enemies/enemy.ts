@@ -19,8 +19,8 @@ export default class Enemy implements PlayerHit {
 
 	enemyContainer: PIXI.Container;
 
-	health: number;
-	maxHealth: number;
+	health: number = 0;
+	maxHealth: number = 0;
 
 	healthBar?: PIXI.Graphics;
 
@@ -51,6 +51,10 @@ export default class Enemy implements PlayerHit {
 
 	value: number = 1;
 
+	eyeScale: number = 1;
+
+	eyeDistance: number = 0.5;
+
 	hitPlayer?(player: Player): void;
 
 	constructor(game: Game) {
@@ -65,9 +69,6 @@ export default class Enemy implements PlayerHit {
 
 		game.container.addChild(this.enemyContainer);
 
-		this.maxHealth = 30;
-		this.health = this.maxHealth;
-
 		this.exploding = false;
 		this.destroyTime = -1;
 
@@ -75,13 +76,20 @@ export default class Enemy implements PlayerHit {
 
 		this.isEnemy = true;
 
-		if (game.debug) this.createHealthBar();
+		this.setStats();
+	}
+
+	setStats() {
+		this.maxHealth = 30;
+		this.health = this.maxHealth;
 	}
 
 	setup() {
 		this.createShape();
 		this.createRidigBody();
 		this.createEyes();
+
+		if (this.game.debug) this.createHealthBar();
 	}
 
 	setPositionNearPlayer() {
@@ -103,8 +111,20 @@ export default class Enemy implements PlayerHit {
 		this.eyes = new PIXI.Container();
 		this.enemyContainer.addChild(this.eyes);
 
-		this.leftEye = new Eye(this.eyes, -this.size / 4, 0, this.color);
-		this.rightEye = new Eye(this.eyes, this.size / 4, 0, this.color);
+		this.leftEye = new Eye(
+			this.eyes,
+			-this.size * this.eyeDistance * 0.5,
+			0,
+			this.color,
+			this.eyeScale
+		);
+		this.rightEye = new Eye(
+			this.eyes,
+			this.size * this.eyeDistance * 0.5,
+			0,
+			this.color,
+			this.eyeScale
+		);
 	}
 
 	createShape() {

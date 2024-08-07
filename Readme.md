@@ -6,6 +6,10 @@ See the submission on [itch.io](https://flo-bit.itch.io/shadow-shmup).
 
 WIP. See the current development version on [GitHub Pages](https://flo-bit.github.io/shadow-shmup/).
 
+
+https://github.com/user-attachments/assets/25994b9d-67f5-4e80-a42a-bcd9d6999a5b
+
+
 ## How to play
 
 - Move with WASD or arrow keys
