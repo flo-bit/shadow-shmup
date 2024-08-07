@@ -8,16 +8,30 @@ import Enemy from './enemy';
 import Player from '../player/player';
 
 export class TriangleEnemy extends Enemy {
-	projectile: Projectile;
-
-	color = 0x0ea5e9;
+	projectile?: Projectile;
 
 	constructor(game: Game) {
 		super(game);
 
-		this.type = 0;
-		this.speed = 600;
+		this.setup();
+	}
 
+	setStats(): void {
+		this.health = 50;
+
+		this.color = 0x0ea5e9;
+		this.type = 0;
+		this.speed = 1000;
+		this.size = 25;
+	}
+
+	setup(): void {
+		super.setup();
+
+		this.createWeapon();
+	}
+
+	createWeapon(): void {
 		let position = { x: this.x, y: this.y };
 
 		this.projectile = new Projectile(this.game, {
@@ -33,16 +47,9 @@ export class TriangleEnemy extends Enemy {
 			collisionGroups: 0x00100001,
 			color: this.color
 		});
-
-		this.setup();
-	}
-
-	createEyes() {
-		super.createEyes();
 	}
 
 	createShape(): void {
-		this.size = 20;
 		this.shape = new PIXI.Graphics()
 			.poly([-this.size, -this.size / 2, this.size, -this.size / 2, 0, this.size])
 			.fill(0);
@@ -108,11 +115,11 @@ export class TriangleEnemy extends Enemy {
 		const x = Math.cos(this.rotation + Math.PI / 2);
 		const y = Math.sin(this.rotation + Math.PI / 2);
 
-		this.projectile.setPosition(this.x + x * 20 - 1, this.y + y * 20 - 1);
+		this.projectile?.setPosition(this.x + x * this.size - 1, this.y + y * this.size - 1);
 
-		if (distance < nearestPlayer.viewDistance) {
+		if (distance < nearestPlayer.viewDistance && this.projectile) {
 			this.projectile.shape.alpha = 1;
-		} else {
+		} else if (this.projectile) {
 			this.projectile.shape.alpha = 0;
 		}
 	}
@@ -120,7 +127,69 @@ export class TriangleEnemy extends Enemy {
 	destroy(dropItem: boolean = true): void {
 		if (this.destroyed) return;
 
-		this.projectile.destroy();
+		this.projectile?.destroy();
 		super.destroy(dropItem);
+	}
+}
+
+export class SmallTriangleEnemy extends TriangleEnemy {
+	setStats(): void {
+		this.health = 10;
+
+		this.type = 0;
+		this.speed = 900;
+		this.size = 15;
+
+		this.color = 0x06b6d4;
+
+		this.eyeScale = 0.7;
+	}
+
+	createShape(): void {
+		this.shape = new PIXI.Graphics()
+			.poly([-this.size, -this.size, this.size, -this.size, 0, this.size])
+			.fill(0);
+		this.enemyContainer.addChild(this.shape);
+
+		this.highlight = new PIXI.Graphics()
+			.poly([-this.size, -this.size, this.size, -this.size, 0, this.size])
+			.fill(this.color);
+
+		this.enemyContainer.addChild(this.highlight);
+		this.highlight.alpha = 0;
+	}
+
+	createRidigBody(): void {
+		const rigidBodyDesc = RAPIER()
+			.RigidBodyDesc.dynamic()
+			.setTranslation(this.x, this.y)
+			.setLinearDamping(1);
+		this.rigidBody = this.game.world.createRigidBody(rigidBodyDesc);
+
+		const colliderDesc = RAPIER()
+			.ColliderDesc.triangle(
+				new Vector2(-this.size, this.size),
+				new Vector2(this.size, this.size),
+				new Vector2(0, -this.size)
+			)
+			.setActiveEvents(RAPIER().ActiveEvents.COLLISION_EVENTS)
+			.setCollisionGroups(0x00020007)
+			.setDensity(1);
+
+		this.game.world.createCollider(colliderDesc, this.rigidBody);
+
+		this.rigidBody.userData = this;
+	}
+}
+
+export class BigTriangleEnemy extends TriangleEnemy {
+	setStats(): void {
+		this.health = 100;
+
+		this.type = 0;
+		this.speed = 2000;
+		this.size = 40;
+		this.color = 0x3b82f6;
+		this.eyeScale = 1.5;
 	}
 }

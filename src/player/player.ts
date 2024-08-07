@@ -63,7 +63,7 @@ export default class Player {
 
 		this.size = 25;
 
-		this._maxHealth = 100;
+		this._maxHealth = 200;
 		this._health = this._maxHealth;
 
 		this.color = num === 0 ? 0xbe123c : 0xf97316;
@@ -91,7 +91,8 @@ export default class Player {
 			color: this.color,
 			lifetime: 2000,
 			piercing: 1,
-			fireRate: 800
+			fireRate: 300,
+			damage: 20
 		});
 
 		this.isPlayer = true;
